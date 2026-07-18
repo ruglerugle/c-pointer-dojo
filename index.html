@@ -1,0 +1,1161 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C POINTER DOJO ― ポインタ道場 ―</title>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-9RTQCP2HXM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-9RTQCP2HXM');
+</script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+html,body{max-width:100vw;overflow-x:hidden}
+:root{
+  --bg1:#123334;--bg2:#0c4a45;--bg3:#081c1d;
+  --paper:#f6f1e2;--paper2:#fffdf6;--ink:#241d12;--muted:#8a7a5c;--line:#ddd0ad;
+  --accent:#c1443a;--accent-dark:#8f2f28;
+  --stack:#3f6fb0;--stack-dark:#2b4d80;
+  --heap:#2fa88f;--heap-dark:#1d7a67;
+  --ptr:#d98e3f;--ptr-dark:#a8661f;
+  --ok:#2f9e5c;--ok-bg:#e6f5ec;--ok-bd:#8fd1ab;
+  --ng:#c8433f;--ng-bg:#fbe9e8;--ng-bd:#e79a97;
+  --shadow:0 16px 40px rgba(0,0,0,.35);
+  --r:10px;--f:system-ui,-apple-system,"Hiragino Sans","Yu Gothic",sans-serif;
+  --m:ui-monospace,'Cascadia Code','SFMono-Regular',Consolas,monospace;
+}
+body{font-family:var(--f);color:var(--ink);font-weight:600;min-height:100vh;
+  background:radial-gradient(circle at 20% 0%,var(--bg2) 0,var(--bg1) 40%,var(--bg3) 100%);}
+.app-shell{min-height:100vh;display:flex;flex-direction:column;gap:12px;padding:10px 12px 24px;}
+
+/* Header */
+.game-header{display:flex;align-items:center;gap:18px;flex-wrap:wrap;color:#fff;padding:10px 16px;
+  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(0,0,0,.14));border-radius:12px;border:1px solid rgba(255,255,255,.15)}
+.brand{display:flex;flex-direction:column;gap:2px;min-width:220px}
+.brand-title{font-size:22px;font-weight:950;letter-spacing:.02em;color:#e8a53f;text-shadow:0 2px 0 rgba(0,0,0,.4)}
+.brand-sub{font-size:12.5px;font-weight:800;color:#d9ece7}
+.head-progress-wrap{flex:1;min-width:160px;display:flex;flex-direction:column;gap:4px}
+.head-progress-label{font-size:11.5px;color:#cfe4de;font-weight:800}
+.head-progress{height:14px;background:rgba(255,255,255,.18);border-radius:999px;overflow:hidden;box-shadow:inset 0 2px 4px rgba(0,0,0,.3)}
+.head-progress-fill{height:100%;width:0;background:linear-gradient(90deg,#f3c47a,var(--ptr));border-radius:999px;transition:width .4s}
+.head-reset{padding:9px 14px;border:1.5px solid rgba(255,255,255,.55);border-radius:8px;background:rgba(0,0,0,.2);color:#fff;font-size:12.5px;font-weight:800;cursor:pointer;white-space:nowrap}
+.head-reset:hover{background:rgba(255,255,255,.12)}
+
+/* Layout */
+.game-layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:14px;align-items:start}
+@media(max-width:820px){.game-layout{grid-template-columns:1fr}}
+
+/* Sidebar */
+.side-panel{background:linear-gradient(180deg,rgba(12,74,69,.92),rgba(8,28,29,.95));border:1px solid rgba(255,255,255,.16);
+  border-radius:12px;box-shadow:var(--shadow);overflow:hidden;position:sticky;top:10px}
+@media(max-width:820px){.side-panel{position:static;overflow-x:auto}}
+.side-head{padding:12px 14px;font-size:13px;font-weight:900;color:#eaf6f2;border-bottom:1px solid rgba(255,255,255,.14)}
+.side-list{display:flex;flex-direction:column}
+@media(max-width:820px){.side-list{flex-direction:row}}
+.side-item{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid rgba(255,255,255,.09);
+  color:#c8ded7;cursor:pointer;user-select:none;touch-action:manipulation;min-width:0}
+@media(max-width:820px){.side-item{border-bottom:none;border-right:1px solid rgba(255,255,255,.09);flex:0 0 auto;min-width:160px}}
+.side-item:hover{background:rgba(255,255,255,.06)}
+.side-item.active{background:rgba(217,142,63,.2);box-shadow:inset 3px 0 0 var(--ptr)}
+.side-item.locked{opacity:.45;cursor:not-allowed}
+.side-icon{font-size:16px;width:20px;text-align:center;flex-shrink:0}
+.side-text{min-width:0}
+.side-main{font-size:12.5px;font-weight:900;line-height:1.3;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.side-sub{font-size:10.5px;color:#a9c7be;margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* Main area */
+.main-area{background:var(--paper);border:1px solid #e3d8bd;border-radius:12px;padding:18px 18px 20px;box-shadow:var(--shadow);min-height:520px}
+.chapter-head{margin-bottom:12px}
+.chapter-badge{display:inline-block;background:linear-gradient(#e8a53f,var(--ptr-dark));color:#3a2705;border-radius:7px;
+  padding:4px 11px;font-size:12px;font-weight:950;letter-spacing:.02em;margin-right:8px;box-shadow:0 2px 0 rgba(0,0,0,.15)}
+.chapter-title{display:inline;font-size:20px;font-weight:950;color:#1c2f2b}
+.chapter-sub{font-size:13px;color:var(--muted);margin-top:4px;font-weight:700}
+
+/* Dialogue */
+.dialogue-scene{display:flex;flex-direction:column;gap:8px;margin:14px 0 16px}
+.d-row{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;align-items:center;
+  background:linear-gradient(180deg,#fff,var(--paper2));border:1px solid var(--line);border-radius:10px;padding:9px 12px}
+.d-row.right{grid-template-columns:minmax(0,1fr) 64px}
+.d-row.right .d-avatar{order:2}
+.d-row.right .d-bubble{order:1}
+.d-avatar{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;
+  box-shadow:0 3px 6px rgba(0,0,0,.18);flex-shrink:0}
+.d-avatar.shihan{background:linear-gradient(#fde3d6,#f7c2a4)}
+.d-avatar.deshi{background:linear-gradient(#dcefe9,#b9dcd0)}
+.d-bubble{font-size:13.5px;line-height:1.75;color:#251c3c;font-weight:700}
+.d-name{font-size:10.5px;font-weight:900;color:var(--muted);margin-bottom:2px}
+
+/* Mission box */
+.mission-box{background:linear-gradient(180deg,#fff8e6,#fdefc9);border:1px solid #e3c877;border-radius:10px;padding:12px 14px;margin-bottom:14px}
+.mission-label{font-size:11.5px;font-weight:950;color:#8a6614;margin-bottom:3px}
+.mission-text{font-size:13.5px;color:#3a2c08;font-weight:700;line-height:1.6}
+.mission-status{display:inline-block;margin-top:8px;padding:3px 11px;border-radius:999px;font-size:11.5px;font-weight:900;
+  background:#eee1bd;color:#8a6614}
+.mission-status.ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-bd)}
+
+/* Stage nav */
+.stage-nav{display:flex;justify-content:flex-end;gap:10px;margin-top:18px;flex-wrap:wrap}
+.btn{border:1px solid #c9bda0;background:#fff;border-radius:8px;padding:.65rem 1.2rem;font-size:13.5px;cursor:pointer;
+  color:var(--ink);font-family:var(--f);font-weight:800;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+.btn:hover{background:#f4efe0}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn-primary{background:linear-gradient(#d98e3f,#a8661f);border-color:#8f5518;color:#fff;box-shadow:0 3px 0 #6f430f}
+.btn-primary:hover{opacity:.92;background:linear-gradient(#d98e3f,#a8661f)}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;box-shadow:none}
+
+/* Generic choice buttons */
+.choice-list{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.choice-btn{border:1.5px solid #b6c9c2;background:#fff;border-radius:8px;padding:.55rem 1rem;font-size:13px;font-weight:800;
+  cursor:pointer;color:#20463d;touch-action:manipulation;text-align:left}
+.choice-btn:hover{background:#eef7f3}
+.choice-btn.choice-ok{background:var(--ok-bg);border-color:var(--ok-bd);color:var(--ok)}
+.choice-btn.choice-ng{background:var(--ng-bg);border-color:var(--ng-bd);color:var(--ng)}
+.quiz-q{font-size:13.5px;font-weight:850;color:#1c2f2b;margin-top:4px}
+.quiz-head{font-size:14px;font-weight:950;color:#1c2f2b;margin:18px 0 10px;padding-top:10px;border-top:1px dashed var(--line)}
+.quiz-card{background:linear-gradient(180deg,#fff,var(--paper2));border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:10px}
+.quiz-explain{margin-top:9px;font-size:12.5px;line-height:1.6;color:#3a2c08;background:#fff8e6;border:1px solid #e3c877;border-radius:8px;padding:8px 10px}
+
+/* ===== Code stepper ===== */
+.stepper{display:flex;flex-direction:column;gap:12px}
+.panel-head{font-size:12px;font-weight:900;color:var(--muted);margin-bottom:6px}
+.code-panel{background:#0e1613;border-radius:10px;padding:12px 4px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.code-panel .panel-head{color:#9fd6c6;padding:0 12px;margin-bottom:8px}
+.code-block{font-family:var(--m);font-size:12.5px;line-height:1.85;overflow-x:auto}
+.code-line{display:flex;gap:10px;padding:1px 12px;white-space:pre;color:#cfe9de;border-left:3px solid transparent}
+.code-line.active{background:rgba(217,142,63,.18);border-left-color:var(--ptr);color:#fff}
+.ln-no{color:#5c8a7c;min-width:22px;text-align:right;user-select:none;flex-shrink:0}
+.ln-text{white-space:pre}
+.tk-kw{color:#e8a53f;font-weight:800}
+.tk-fn{color:#7fd6c4}
+.tk-str{color:#f0c987}
+.tk-num{color:#9fd6c6}
+.tk-cm{color:#5c8a7c;font-style:italic}
+
+.mem-panel-wrap{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:14px;background:#fbf7ea;border:1px solid var(--line);border-radius:10px;padding:12px}
+@media(max-width:640px){.mem-panel-wrap{grid-template-columns:1fr}}
+.mem-col-head{font-size:12px;font-weight:900;color:var(--muted);margin-bottom:8px}
+.mem-col-body{display:flex;flex-direction:column;gap:10px;min-height:40px}
+.arrow-svg{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.arrow-path{fill:none;stroke:var(--ptr);stroke-width:2}
+.arrow-path.dangling{stroke:var(--ng);stroke-dasharray:4 3}
+
+.frame-box{border:1.5px solid var(--stack);border-radius:8px;overflow:hidden;background:#fff}
+.frame-head{background:linear-gradient(#5f8bcc,var(--stack-dark));color:#fff;font-size:11.5px;font-weight:900;padding:5px 10px}
+.frame-vars{display:flex;flex-direction:column;gap:6px;padding:8px}
+.frame-empty{font-size:11.5px;color:var(--muted);padding:2px 2px}
+
+.mem-box{border:1.5px solid var(--stack);border-radius:7px;background:#fff;font-size:12px}
+.mem-box.heap-box{border-color:var(--heap)}
+.mem-box.heap-box.is-freed{opacity:.55;border-style:dashed;filter:grayscale(.25)}
+.mem-box-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 8px;background:rgba(63,111,176,.08)}
+.heap-box .mem-box-row{background:rgba(47,168,143,.1)}
+.mem-box-name{font-family:var(--m);font-size:11.5px}
+.mem-box-label{font-family:var(--m);font-size:11.5px;font-weight:800}
+.mem-addr{font-family:var(--m);font-size:10px;color:var(--muted)}
+.mem-box-body{padding:6px 8px}
+.mem-box-fields{padding:2px 0}
+.mem-field-row{display:flex;justify-content:space-between;gap:8px;padding:3px 8px;font-family:var(--m);font-size:11.5px;border-top:1px dashed var(--line)}
+.mem-field-row:first-child{border-top:none}
+.mem-box-badge{font-size:10.5px;font-weight:900;color:var(--ng);padding:3px 8px;background:var(--ng-bg);text-align:center}
+
+.tag-null{display:inline-block;font-family:var(--m);font-size:10.5px;font-weight:800;color:#7a7050;background:#eee6cf;border-radius:5px;padding:1px 6px}
+.tag-wild{display:inline-block;font-family:var(--m);font-size:10.5px;font-weight:800;color:var(--ng);background:var(--ng-bg);border-radius:5px;padding:1px 6px}
+.tag-addr{display:inline-block;font-family:var(--m);font-size:10.5px;font-weight:800;color:var(--ptr-dark);background:#fdeed4;border-radius:5px;padding:1px 6px}
+
+.step-note{font-size:13px;line-height:1.7;color:#241d12;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.step-controls{display:flex;align-items:center;justify-content:center;gap:14px}
+.step-progress{font-family:var(--m);font-size:12px;color:var(--muted);min-width:56px;text-align:center}
+
+/* Code quiz cards (bug dojo / final challenge) */
+.codequiz-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px}
+.codequiz-code{font-family:var(--m);font-size:12px;line-height:1.75;background:#0e1613;color:#cfe9de;border-radius:8px;padding:10px 12px;margin-bottom:10px;overflow-x:auto;white-space:pre}
+.codequiz-code .code-line{padding:0;border-left:none}
+
+/* Ending */
+.ending{text-align:center;padding:20px 10px}
+.ending h2{font-size:22px;margin-bottom:14px;color:#1c2f2b}
+.ending p{font-size:13.5px;line-height:1.8;color:#3a2c08;margin-bottom:16px}
+.ending-list{text-align:left;display:inline-block;background:#fff8e6;border:1px solid #e3c877;border-radius:10px;padding:14px 18px;font-size:12.5px;line-height:2;color:#3a2c08;margin-bottom:18px}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <header class="game-header">
+    <div class="brand">
+      <div class="brand-title">🥋 C POINTER DOJO</div>
+      <div class="brand-sub">― ポインタ道場 ―</div>
+    </div>
+    <div class="head-progress-wrap">
+      <div class="head-progress-label" id="progress-label">クリア 0 / 8</div>
+      <div class="head-progress"><div class="head-progress-fill" id="progress-fill"></div></div>
+    </div>
+    <button class="head-reset" id="btn-reset-all">🔄 最初から</button>
+  </header>
+
+  <div class="game-layout">
+    <aside class="side-panel">
+      <div class="side-head">📚 章の一覧</div>
+      <div class="side-list" id="side-list"></div>
+    </aside>
+    <main class="main-area" id="main-area"></main>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+/* =====================================================================
+   utilities
+   ===================================================================== */
+function qs(sel, root){ return (root||document).querySelector(sel); }
+function escapeHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function highlightC(line){
+  const escd = escapeHtml(line);
+  return escd.replace(
+    /(\/\/.*$)|("(?:[^"\\]|\\.)*")|\b(int|char|double|float|void|struct|typedef|return|if|else|while|for|sizeof|NULL)\b|\b(malloc|free|printf)\b|\b(\d+(?:\.\d+)?)\b/g,
+    (m, cm, str, kw, fn, num) => {
+      if(cm) return `<span class="tk-cm">${cm}</span>`;
+      if(str) return `<span class="tk-str">${str}</span>`;
+      if(kw) return `<span class="tk-kw">${kw}</span>`;
+      if(fn) return `<span class="tk-fn">${fn}</span>`;
+      if(num) return `<span class="tk-num">${num}</span>`;
+      return m;
+    }
+  );
+}
+
+/* =====================================================================
+   memory-state model shared by every stepper stage
+   ===================================================================== */
+function makeStackAddrGen(){
+  let cur = 0x7ffee260;
+  return (size)=>{ cur -= (size||4); return cur; };
+}
+function makeHeapAddrGen(){
+  let cur = 0x55d5a010;
+  return (size)=>{ const a = cur; cur += (Math.ceil((size||4)/16)*16 || 16); return a; };
+}
+function freshMem(frameNames){
+  const mem = { frames:[], heap:[], _stackAddr:makeStackAddrGen(), _heapAddr:makeHeapAddrGen() };
+  (frameNames||['main']).forEach(n=> mem.frames.push({id:n, name:n, vars:[]}));
+  return mem;
+}
+function sizeOfType(type){
+  if(type.includes('*')) return 8;
+  if(type==='double') return 8;
+  return 4;
+}
+function svar(mem, frameId, id, name, type, value, pointsTo){
+  const addrNum = mem._stackAddr(sizeOfType(type));
+  const frame = mem.frames.find(f=>f.id===frameId);
+  const v = {id, name, type, value, addr:'0x'+addrNum.toString(16)};
+  if(pointsTo !== undefined) v.pointsTo = pointsTo;
+  frame.vars.push(v);
+}
+function stackArrayAddrs(mem, n, elemSize){
+  const start = mem._stackAddr(n*elemSize);
+  return Array.from({length:n}, (_,i)=> start + i*elemSize);
+}
+function svarWithAddr(mem, frameId, id, name, type, value, addrNum){
+  const frame = mem.frames.find(f=>f.id===frameId);
+  frame.vars.push({id, name, type, value, addr:'0x'+addrNum.toString(16)});
+}
+function hblock(mem, id, label, size, opts){
+  opts = opts || {};
+  const addrNum = mem._heapAddr(size);
+  mem.heap.push({id, label, size, addr:'0x'+addrNum.toString(16), status:'alive', fields:opts.fields||null, value:opts.value});
+}
+function hfree(mem, id){ const h = mem.heap.find(x=>x.id===id); if(h) h.status='freed'; }
+function setHeapValue(mem, id, value){ const h = mem.heap.find(x=>x.id===id); if(h) h.value = value; }
+function setVar(mem, frameId, varId, patch){
+  const f = mem.frames.find(x=>x.id===frameId); if(!f) return;
+  const v = f.vars.find(x=>x.id===varId); if(v) Object.assign(v, patch);
+}
+function setField(mem, heapId, key, patch){
+  const h = mem.heap.find(x=>x.id===heapId); if(!h || !h.fields) return;
+  const fld = h.fields.find(x=>x.key===key); if(fld) Object.assign(fld, patch);
+}
+function pushFrame(mem, id, name){ mem.frames.push({id, name, vars:[]}); }
+function popFrame(mem, id){ mem.frames = mem.frames.filter(f=>f.id!==id); }
+
+function resolveAddrDisplay(mem, pointsTo){
+  const h = mem.heap.find(x=>x.id===pointsTo);
+  if(h) return h.addr;
+  for(const f of mem.frames){ const v = f.vars.find(x=>x.id===pointsTo); if(v) return v.addr; }
+  return null;
+}
+function isFreedTarget(mem, id){
+  const h = mem.heap.find(x=>x.id===id);
+  return h ? h.status==='freed' : false;
+}
+function collectPointerAnchors(mem){
+  const list = [];
+  mem.frames.forEach(f=> f.vars.forEach(v=>{
+    if(v.pointsTo && v.pointsTo!=='NULL' && v.pointsTo!=='WILD'){
+      list.push({fromDomId:`box-${v.id}`, toId:v.pointsTo, dangling:isFreedTarget(mem, v.pointsTo)});
+    }
+  }));
+  mem.heap.forEach(h=>{
+    (h.fields||[]).forEach(fld=>{
+      if(fld.pointsTo && fld.pointsTo!=='NULL' && fld.pointsTo!=='WILD'){
+        list.push({fromDomId:`field-${h.id}-${fld.key}`, toId:fld.pointsTo, dangling:isFreedTarget(mem, fld.pointsTo)});
+      }
+    });
+  });
+  return list;
+}
+
+/* =====================================================================
+   memory-panel rendering
+   ===================================================================== */
+function renderVarBox(v, mem){
+  const isPtr = Object.prototype.hasOwnProperty.call(v, 'pointsTo');
+  let valueHtml;
+  if(!isPtr){ valueHtml = escapeHtml(String(v.value)); }
+  else if(v.pointsTo === 'NULL'){ valueHtml = `<span class="tag-null">NULL</span>`; }
+  else if(v.pointsTo === 'WILD'){ valueHtml = `<span class="tag-wild">❓ 未初期化</span>`; }
+  else { valueHtml = `<span class="tag-addr">${resolveAddrDisplay(mem, v.pointsTo) || '?'}</span>`; }
+  return `<div class="mem-box stack-box" id="box-${v.id}">
+    <div class="mem-box-row"><span class="mem-box-name">${escapeHtml(v.type)} <b>${escapeHtml(v.name)}</b></span><span class="mem-addr">${v.addr}</span></div>
+    <div class="mem-box-body">${valueHtml}</div>
+  </div>`;
+}
+function renderFrames(mem){
+  return mem.frames.slice().reverse().map(f=>`
+    <div class="frame-box">
+      <div class="frame-head">🔧 ${escapeHtml(f.name)}()</div>
+      <div class="frame-vars">${f.vars.length ? f.vars.map(v=>renderVarBox(v, mem)).join('') : '<div class="frame-empty">（変数なし）</div>'}</div>
+    </div>`).join('');
+}
+function renderHeapBox(h, mem){
+  const freed = h.status === 'freed';
+  let body;
+  if(h.fields){
+    body = h.fields.map(f=>{
+      const isPtr = Object.prototype.hasOwnProperty.call(f, 'pointsTo');
+      let vhtml;
+      if(!isPtr) vhtml = escapeHtml(String(f.value));
+      else if(f.pointsTo === 'NULL') vhtml = `<span class="tag-null">NULL</span>`;
+      else if(f.pointsTo === 'WILD') vhtml = `<span class="tag-wild">❓</span>`;
+      else vhtml = `<span class="tag-addr">${resolveAddrDisplay(mem, f.pointsTo) || '?'}</span>`;
+      return `<div class="mem-field-row" id="field-${h.id}-${f.key}"><span class="mem-field-name">${escapeHtml(f.name)}</span><span class="mem-field-value">${vhtml}</span></div>`;
+    }).join('');
+  } else {
+    body = `<div class="mem-field-row"><span class="mem-field-name">value</span><span class="mem-field-value">${escapeHtml(String(h.value))}</span></div>`;
+  }
+  return `<div class="mem-box heap-box ${freed ? 'is-freed' : ''}" id="box-${h.id}">
+    <div class="mem-box-row"><span class="mem-box-label">${escapeHtml(h.label)}</span><span class="mem-addr">${h.addr}</span></div>
+    <div class="mem-box-fields">${body}</div>
+    ${freed ? '<div class="mem-box-badge">🗑 解放済み（use-after-freeに注意）</div>' : ''}
+  </div>`;
+}
+function renderHeap(mem){
+  if(!mem.heap.length) return '<div class="frame-empty">（まだ確保されていません）</div>';
+  return mem.heap.map(h=> renderHeapBox(h, mem)).join('');
+}
+function drawArrows(root, mem){
+  const wrap = qs('#mem-panel-wrap', root);
+  const svg = qs('#arrow-svg', root);
+  if(!wrap || !svg) return;
+  const wrapRect = wrap.getBoundingClientRect();
+  svg.setAttribute('width', wrapRect.width);
+  svg.setAttribute('height', wrapRect.height);
+  svg.innerHTML = `<defs>
+    <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="${getComputedStyle(document.documentElement).getPropertyValue('--ptr').trim() || '#d98e3f'}"/>
+    </marker>
+    <marker id="arrowhead-ng" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L7,3 L0,6 Z" fill="${getComputedStyle(document.documentElement).getPropertyValue('--ng').trim() || '#c8433f'}"/>
+    </marker>
+  </defs>`;
+  collectPointerAnchors(mem).forEach(a=>{
+    const fromEl = qs('#'+CSS.escape(a.fromDomId), root);
+    const toEl = qs('#'+CSS.escape('box-'+a.toId), root);
+    if(!fromEl || !toEl) return;
+    const fr = fromEl.getBoundingClientRect(), tr = toEl.getBoundingClientRect();
+    const x1 = fr.right - wrapRect.left, y1 = fr.top + fr.height/2 - wrapRect.top;
+    const x2 = tr.left - wrapRect.left, y2 = tr.top + tr.height/2 - wrapRect.top;
+    const mx = (x1+x2)/2;
+    const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+    path.setAttribute('d', `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`);
+    path.setAttribute('class', 'arrow-path' + (a.dangling ? ' dangling' : ''));
+    path.setAttribute('marker-end', a.dangling ? 'url(#arrowhead-ng)' : 'url(#arrowhead)');
+    svg.appendChild(path);
+  });
+}
+window._currentArrowRedraw = null;
+window.addEventListener('resize', ()=>{ if(window._currentArrowRedraw) window._currentArrowRedraw(); });
+
+/* =====================================================================
+   generic quiz block (used at the end of a stepper)
+   ===================================================================== */
+function renderQuizArea(container, quizzes, onDone){
+  container.innerHTML = quizzes.map((q,qi)=>`
+    <div class="quiz-card" data-qi="${qi}">
+      <div class="quiz-q">Q${qi+1}. ${q.q}</div>
+      <div class="choice-list">${q.choices.map((c,ci)=>`<button class="choice-btn" data-qi="${qi}" data-ci="${ci}">${escapeHtml(c)}</button>`).join('')}</div>
+      <div class="quiz-explain" style="display:none"></div>
+    </div>`).join('');
+  const solved = new Set();
+  container.querySelectorAll('.choice-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const qi = Number(btn.dataset.qi), ci = Number(btn.dataset.ci);
+      const card = container.querySelector(`.quiz-card[data-qi="${qi}"]`);
+      if(card.classList.contains('answered')) return;
+      const q = quizzes[qi];
+      const isOk = ci === q.correct;
+      card.querySelectorAll('.choice-btn').forEach((b,i)=>{
+        if(i===q.correct) b.classList.add('choice-ok');
+        else if(i===ci && !isOk) b.classList.add('choice-ng');
+      });
+      card.classList.add('answered');
+      const ex = card.querySelector('.quiz-explain');
+      ex.style.display = 'block';
+      ex.innerHTML = (isOk ? '✅ 正解。 ' : '❌ 不正解。 ') + q.explain;
+      if(isOk){ solved.add(qi); if(solved.size === quizzes.length) onDone(); }
+    });
+  });
+}
+
+/* =====================================================================
+   code-quiz cards (bug dojo / final challenge — no live stepping)
+   ===================================================================== */
+function renderCodeQuizArea(root, cards, onDone){
+  root.innerHTML = cards.map((c,ci)=>`
+    <div class="codequiz-card" data-ci="${ci}">
+      <div class="codequiz-code">${c.code.map(l=>`<div class="code-line"><span class="ln-text">${highlightC(l)}</span></div>`).join('')}</div>
+      <div class="quiz-q">${c.q}</div>
+      <div class="choice-list">${c.choices.map((ch,i)=>`<button class="choice-btn" data-ci="${ci}" data-i="${i}">${escapeHtml(ch)}</button>`).join('')}</div>
+      <div class="quiz-explain" style="display:none"></div>
+    </div>`).join('');
+  const solved = new Set();
+  root.querySelectorAll('.choice-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const ci = Number(btn.dataset.ci), i = Number(btn.dataset.i);
+      const card = root.querySelector(`.codequiz-card[data-ci="${ci}"]`);
+      if(card.classList.contains('answered')) return;
+      const conf = cards[ci];
+      const isOk = i === conf.correct;
+      card.querySelectorAll('.choice-btn').forEach((b,bi)=>{
+        if(bi===conf.correct) b.classList.add('choice-ok');
+        else if(bi===i && !isOk) b.classList.add('choice-ng');
+      });
+      card.classList.add('answered');
+      const ex = card.querySelector('.quiz-explain');
+      ex.style.display = 'block';
+      ex.innerHTML = (isOk ? '✅ 正解。 ' : '❌ 不正解。 ') + conf.explain;
+      if(isOk){ solved.add(ci); if(solved.size === cards.length) onDone(); }
+    });
+  });
+}
+
+/* =====================================================================
+   generic code stepper
+   ===================================================================== */
+function buildStepper(root, ctx, cfg){
+  root.innerHTML = `
+    <div class="stepper">
+      <div class="code-panel">
+        <div class="panel-head">📝 実行するCコード</div>
+        <div class="code-block" id="code-block"></div>
+      </div>
+      <div class="mem-panel-wrap" id="mem-panel-wrap">
+        <div class="mem-col"><div class="mem-col-head">📥 スタック</div><div class="mem-col-body" id="frames-body"></div></div>
+        <div class="mem-col"><div class="mem-col-head">📤 ヒープ</div><div class="mem-col-body" id="heap-body"></div></div>
+        <svg class="arrow-svg" id="arrow-svg"></svg>
+      </div>
+      <div class="step-note" id="step-note"></div>
+      <div class="step-controls">
+        <button class="btn" id="btn-prev">◀ 前へ</button>
+        <span class="step-progress" id="step-progress"></span>
+        <button class="btn btn-primary" id="btn-next">次へ ▶</button>
+      </div>
+      <div class="quiz-area" id="quiz-area"></div>
+    </div>
+  `;
+  let stepIdx = -1;
+  let quizMounted = false;
+
+  function computeMem(){
+    const mem = cfg.initMem();
+    for(let i=0;i<=stepIdx;i++) cfg.steps[i].apply(mem);
+    return mem;
+  }
+
+  function render(){
+    const mem = computeMem();
+    const curLine = stepIdx>=0 ? cfg.steps[stepIdx].line : null;
+    qs('#code-block', root).innerHTML = cfg.code.map((text,i)=>{
+      const ln = i+1;
+      return `<div class="code-line ${ln===curLine?'active':''}"><span class="ln-no">${ln}</span><span class="ln-text">${highlightC(text)}</span></div>`;
+    }).join('');
+    qs('#frames-body', root).innerHTML = renderFrames(mem);
+    qs('#heap-body', root).innerHTML = renderHeap(mem);
+    drawArrows(root, mem);
+    qs('#step-note', root).innerHTML = stepIdx < 0 ? '▶ 「次へ」を押してコードの実行を始めよう。' : cfg.steps[stepIdx].note;
+    qs('#step-progress', root).textContent = `${stepIdx+1} / ${cfg.steps.length}`;
+    qs('#btn-prev', root).disabled = stepIdx < 0;
+    qs('#btn-next', root).disabled = stepIdx >= cfg.steps.length - 1;
+    if(stepIdx >= cfg.steps.length - 1 && !quizMounted){
+      quizMounted = true;
+      const area = qs('#quiz-area', root);
+      area.innerHTML = '<div class="quiz-head">🧠 理解度チェック</div><div id="quiz-cards"></div>';
+      renderQuizArea(qs('#quiz-cards', root), cfg.quiz, ()=> ctx.complete());
+    }
+  }
+
+  qs('#btn-prev', root).addEventListener('click', ()=>{ if(stepIdx>=0){ stepIdx--; render(); } });
+  qs('#btn-next', root).addEventListener('click', ()=>{ if(stepIdx<cfg.steps.length-1){ stepIdx++; render(); } });
+  window._currentArrowRedraw = ()=> drawArrows(root, computeMem());
+  render();
+}
+
+/* =====================================================================
+   chapter 1: 変数とアドレス
+   ===================================================================== */
+function buildAddr(root, ctx){
+  buildStepper(root, ctx, {
+    code:[
+      '#include <stdio.h>',
+      '',
+      'int main(void) {',
+      '    int a = 10;',
+      '    int b = 20;',
+      '    printf("%p\\n", &a);',
+      '    printf("%p\\n", &b);',
+      '    return 0;',
+      '}',
+    ],
+    initMem: ()=> freshMem(['main']),
+    steps:[
+      {line:4, apply:(m)=>svar(m,'main','s_a','a','int',10), note:'変数 <b>a</b> がスタックに置かれ、値10が格納された。右側に自動で割り振られた番地(アドレス)が表示されている。'},
+      {line:5, apply:(m)=>svar(m,'main','s_b','b','int',20), note:'続けて変数 <b>b</b> が積まれた。スタックは呼ばれた順に積み上がっていく。'},
+      {line:6, apply:(m)=>{}, note:'<code>&a</code> は「aが置かれている番地」を取り出す演算子じゃ。出力例: <code>0x7ffee24c</code>'},
+      {line:7, apply:(m)=>{}, note:'同様に <code>&b</code> でbの番地が得られる。出力例: <code>0x7ffee248</code>'},
+      {line:8, apply:(m)=>{}, note:'<code>return 0;</code> でmainの終了処理に入る。'},
+      {line:9, apply:(m)=>popFrame(m,'main'), note:'mainが終了。スタックフレームがまとめて破棄され、a・bのメモリは自動的に返却される。ヒープと違い、スタックの解放はコンパイラが自動でやってくれる。'},
+    ],
+    quiz:[
+      {q:'&a という式で得られるものは？', choices:['aのコピーされた値','aが置かれているメモリの番地','aのデータ型'], correct:1, explain:'&は「アドレス演算子」。変数そのものではなく、その変数が置かれている番地を取り出す。'},
+      {q:'mainが終了(return)すると、a・bのメモリはどうなる？', choices:['自動的に解放される(スタックが巻き戻る)','ずっと残り続けるのでfree()が必要','ガベージコレクタが後で回収する'], correct:0, explain:'スタック上のローカル変数はヒープと違いfree()不要。関数終了時にコンパイラが自動で解放(巻き戻し)する。'},
+    ],
+  });
+}
+
+/* =====================================================================
+   chapter 2: ポインタ演算と配列
+   ===================================================================== */
+function buildArith(root, ctx){
+  buildStepper(root, ctx, {
+    code:[
+      '#include <stdio.h>',
+      '',
+      'int main(void) {',
+      '    int arr[4] = {10, 20, 30, 40};',
+      '    int *p = arr;',
+      '    printf("%d\\n", *p);',
+      '    p = p + 1;',
+      '    printf("%d\\n", *p);',
+      '    printf("%d\\n", arr[2]);',
+      '    printf("%d\\n", *(arr + 2));',
+      '    return 0;',
+      '}',
+    ],
+    initMem: ()=> freshMem(['main']),
+    steps:[
+      {line:4, apply:(m)=>{
+        const addrs = stackArrayAddrs(m,4,4);
+        const vals = [10,20,30,40];
+        addrs.forEach((a,i)=> svarWithAddr(m,'main',`s_arr${i}`,`arr[${i}]`,'int',vals[i],a));
+      }, note:'配列 <b>arr</b> の4要素がスタック上に連続して確保された。配列名は「先頭要素への隣接した並び」であることに注目。'},
+      {line:5, apply:(m)=>svar(m,'main','s_p','p','int *',null,'s_arr0'), note:'<code>int *p = arr;</code> — 配列名 <code>arr</code> は先頭要素 <code>arr[0]</code> の番地に「配列は自動的に読み替えられる（=decayする）」ため、pはarr[0]を指す。'},
+      {line:6, apply:(m)=>{}, note:'<code>*p</code> は「pが指す先」、つまりarr[0]の値を取り出す。出力: <b>10</b>'},
+      {line:7, apply:(m)=>setVar(m,'main','s_p',{pointsTo:'s_arr1'}), note:'<code>p = p + 1;</code> — ポインタ演算の+1は「1バイト」ではなく「指している型1個分(int=4バイト)」進む。結果としてpはarr[1]を指す。'},
+      {line:8, apply:(m)=>{}, note:'pは今arr[1]を指しているので <code>*p</code> の出力は <b>20</b>'},
+      {line:9, apply:(m)=>{}, note:'<code>arr[2]</code> は30。配列の添字アクセスそのもの。'},
+      {line:10, apply:(m)=>{}, note:'<code>*(arr + 2)</code> は <code>arr[2]</code> と全く同じ意味。出力: <b>30</b>'},
+      {line:11, apply:(m)=>popFrame(m,'main'), note:'mainが終了し、フレームが破棄された。'},
+    ],
+    quiz:[
+      {q:'p = p + 1; の後、pのアドレスは元のアドレスから何バイト進むか？', choices:['1バイト','4バイト（int1個分）','ポインタのサイズ分は不明で環境依存'], correct:1, explain:'ポインタ演算は「指している型のサイズ」単位で進む。int(4バイト)へのポインタなら+1は+4バイトになる。'},
+      {q:'arr[2] と完全に等価な式はどれ？', choices:['*(arr + 2)','&arr + 2','arr * 2'], correct:0, explain:'a[i] は言語仕様上 *(a + i) の糖衣構文として定義されている。両者は常に同じ結果になる。'},
+    ],
+  });
+}
+
+/* =====================================================================
+   chapter 3: malloc/freeとヒープ管理
+   ===================================================================== */
+function buildHeapMgmt(root, ctx){
+  buildStepper(root, ctx, {
+    code:[
+      '#include <stdlib.h>',
+      '',
+      'int main(void) {',
+      '    int *p = NULL;',
+      '    p = (int *)malloc(sizeof(int) * 3);',
+      '    if (p == NULL) {',
+      '        return 1;',
+      '    }',
+      '    p[0] = 100;',
+      '    p[1] = 200;',
+      '    p[2] = 300;',
+      '    free(p);',
+      '    p = NULL;',
+      '    return 0;',
+      '}',
+    ],
+    initMem: ()=> freshMem(['main']),
+    steps:[
+      {line:4, apply:(m)=>svar(m,'main','s_p','p','int *',null,'NULL'), note:'まずpをNULLで初期化しておく。まだどこも指していないことを明示する良い習慣じゃ。'},
+      {line:5, apply:(m)=>{
+        hblock(m,'h_arr','malloc(int×3)',12,{fields:[{key:'0',name:'p[0]',value:'?'},{key:'1',name:'p[1]',value:'?'},{key:'2',name:'p[2]',value:'?'}]});
+        setVar(m,'main','s_p',{pointsTo:'h_arr'});
+      }, note:'<code>malloc</code>はヒープに12バイト(int 4バイト×3)を確保し、その先頭番地を返す。pがその番地を指すようになった。'},
+      {line:6, apply:(m)=>{}, note:'今回の確保は成功したと仮定して先へ進む。もしmallocが失敗するとNULLが返るので、このチェックを省略すると危険なことになる(第7章で詳しく扱う)。'},
+      {line:9, apply:(m)=>setField(m,'h_arr','0',{value:100}), note:'<code>p[0] = 100;</code> — ヒープ上の1つ目の要素に書き込む。'},
+      {line:10, apply:(m)=>setField(m,'h_arr','1',{value:200}), note:'<code>p[1] = 200;</code>'},
+      {line:11, apply:(m)=>setField(m,'h_arr','2',{value:300}), note:'<code>p[2] = 300;</code>'},
+      {line:12, apply:(m)=>hfree(m,'h_arr'), note:'<code>free(p);</code> でヒープ領域を解放。しかしpの値(番地)自体は書き換わっていないので、この時点のpは解放済みメモリを指す「ダングリングポインタ」になっている。矢印が赤い破線に変わったことに注目。'},
+      {line:13, apply:(m)=>setVar(m,'main','s_p',{pointsTo:'NULL'}), note:'<code>p = NULL;</code> — pをNULLに戻すことで、誤って解放済み領域を使ってしまう事故(use-after-free)を防ぐ、安全な習慣じゃ。'},
+      {line:14, apply:(m)=>popFrame(m,'main'), note:'mainが終了し、フレームが破棄された。'},
+    ],
+    quiz:[
+      {q:'free(p); を実行した直後、pという変数自体の値(番地)はどうなる？', choices:['pの値は変わらない。ただし指し先は使ってはいけない領域になる','pは自動的にNULLになる','pの値は自動的に0にリセットされる'], correct:0, explain:'free()はヒープ領域を「解放」するだけで、ポインタ変数pの中身は書き換えない。だから直後のpはダングリングポインタになりうる。'},
+      {q:'free(p); の直後に p = NULL; とする主な理由は？', choices:['ダングリングポインタの誤用（use-after-free）を防ぐため','ヒープの空き容量を増やすため','コンパイルエラーを防ぐため'], correct:0, explain:'NULLにしておけば、その後うっかり*pへアクセスしてもすぐ気づける（多くの環境でクラッシュする）。解放済みメモリを黙って読み書きし続ける事故を防げる。'},
+    ],
+  });
+}
+
+/* =====================================================================
+   chapter 4: 構造体とポインタ
+   ===================================================================== */
+function buildStruct(root, ctx){
+  buildStepper(root, ctx, {
+    code:[
+      '#include <stdlib.h>',
+      '',
+      'typedef struct {',
+      '    int id;',
+      '    double score;',
+      '} Player;',
+      '',
+      'int main(void) {',
+      '    Player *pl = (Player *)malloc(sizeof(Player));',
+      '    pl->id = 1;',
+      '    pl->score = 98.5;',
+      '    printf("%d\\n", pl->id);',
+      '    free(pl);',
+      '    return 0;',
+      '}',
+    ],
+    initMem: ()=> freshMem(['main']),
+    steps:[
+      {line:9, apply:(m)=>{
+        hblock(m,'h_pl','Player',16,{fields:[{key:'id',name:'id',value:'?'},{key:'score',name:'score',value:'?'}]});
+        svar(m,'main','s_pl','pl','Player *',null,'h_pl');
+      }, note:'<code>malloc(sizeof(Player))</code> で構造体1個分の領域をヒープに確保。plがその番地を指す。中身(id, score)はまだ未初期化。'},
+      {line:10, apply:(m)=>setField(m,'h_pl','id',{value:1}), note:'<code>pl-&gt;id = 1;</code> — <code>pl-&gt;id</code>は<code>(*pl).id</code>と全く同じ意味。矢印演算子<code>-&gt;</code>は「ポインタ経由でメンバへ直接アクセスする」ための糖衣構文じゃ。'},
+      {line:11, apply:(m)=>setField(m,'h_pl','score',{value:98.5}), note:'<code>pl-&gt;score = 98.5;</code>'},
+      {line:12, apply:(m)=>{}, note:'<code>printf("%d\\n", pl-&gt;id);</code> — 出力: <b>1</b>'},
+      {line:13, apply:(m)=>hfree(m,'h_pl'), note:'<code>free(pl);</code> — ヒープ領域を解放。free後もplの値(番地)は変わっていない。もしこの後<code>pl-&gt;id</code>にアクセスすれば解放済みメモリへのアクセス(use-after-free)になる。'},
+      {line:14, apply:(m)=>popFrame(m,'main'), note:'mainが終了し、フレームが破棄された。'},
+    ],
+    quiz:[
+      {q:'pl->id は何と完全に同じ意味か？', choices:['(*pl).id','*pl.id','pl.id'], correct:0, explain:'->はポインタ経由でメンバへアクセスする糖衣構文。pl->id は (*pl).id を短く書いたものにすぎない。'},
+      {q:'このコードでは free(pl); のあと pl を NULL にしていない。この直後に pl->id へアクセスすると何が起きる？', choices:['解放済みメモリへのアクセス(use-after-free)になり、未定義動作となる','自動的に0が返るだけで安全','コンパイルエラーになる'], correct:0, explain:'freeは領域を「使ってよい」と手放すだけで、ポインタの中身は変えない。解放後に触ると未定義動作(クラッシュや不正な値)につながる。'},
+    ],
+  });
+}
+
+/* =====================================================================
+   chapter 5: 二重ポインタ
+   ===================================================================== */
+function buildDouble(root, ctx){
+  buildStepper(root, ctx, {
+    code:[
+      '#include <stdlib.h>',
+      '',
+      'void allocate(int **out) {',
+      '    *out = (int *)malloc(sizeof(int));',
+      '    **out = 42;',
+      '}',
+      '',
+      'int main(void) {',
+      '    int *p = NULL;',
+      '    allocate(&p);',
+      '    printf("%d\\n", *p);',
+      '    free(p);',
+      '    return 0;',
+      '}',
+    ],
+    initMem: ()=> freshMem(['main']),
+    steps:[
+      {line:9, apply:(m)=>svar(m,'main','s_p','p','int *',null,'NULL'), note:'mainでpをNULLで初期化。'},
+      {line:10, apply:(m)=>{
+        pushFrame(m,'allocate','allocate');
+        svar(m,'allocate','s_out','out','int **',null,'s_p');
+      }, note:'<code>allocate(&p);</code> — &pでpのアドレス(pというスタック領域そのものの番地)を渡す。outは「pを指すポインタ」、つまりint**型になる。矢印がmainのpに向いていることに注目。'},
+      {line:4, apply:(m)=>{
+        hblock(m,'h_v','malloc(int)',4,{value:'?'});
+        setVar(m,'main','s_p',{pointsTo:'h_v'});
+      }, note:'<code>*out = malloc(...);</code> — 「outが指す先」つまりmainのpの中身を書き換える。これによりmainのpがヒープの新しい領域を指すようになった。'},
+      {line:5, apply:(m)=>setHeapValue(m,'h_v',42), note:'<code>**out = 42;</code> — 「outが指す先(p)が指す先(ヒープ)」をたどって値を書き込む、二段階の間接参照じゃ。'},
+      {line:6, apply:(m)=>popFrame(m,'allocate'), note:'allocateが終了し、そのフレーム(out)は破棄される。しかしmainのpはすでに書き換わっているので、変更はちゃんと残っている。'},
+      {line:11, apply:(m)=>{}, note:'<code>printf("%d\\n", *p);</code> — 出力: <b>42</b>'},
+      {line:12, apply:(m)=>hfree(m,'h_v'), note:'<code>free(p);</code> — 確保した領域を解放。'},
+      {line:13, apply:(m)=>popFrame(m,'main'), note:'mainが終了し、フレームが破棄された。'},
+    ],
+    quiz:[
+      {q:'allocate関数の引数がint*ではなくint**である理由は？', choices:['関数の中でp自体(pが指すアドレス)を書き換えるため','実行速度を上げるため','メモリを2倍確保するため'], correct:0, explain:'C言語は値渡し。int*で渡すとpのコピーしか受け取れず、コピーを書き換えても呼び出し元のpは変わらない。呼び出し元のp自体を書き換えるには、pのアドレス(&p)、つまりint**が必要。'},
+      {q:'*out = malloc(...); は具体的に何を書き換えているか？', choices:['mainのpの値(pが指す先のアドレス)','out変数自身が置かれているアドレス','ヒープの中身そのもの'], correct:0, explain:'*outは「outが指す先」を意味する。outはmainのpを指しているので、*out=... はmainのpの中身(アドレス)を書き換えることになる。'},
+      {q:'動的な2次元配列を int **grid; grid = malloc(rows * sizeof(int*)); のように作るとき、grid[i] は何を指すか？', choices:['i行目の実データ(int配列)が置かれたヒープ領域の番地','grid自身のアドレス','1行目の先頭要素の値そのもの'], correct:0, explain:'gridは「int*の配列」を指すポインタ。grid[i]にそれぞれmalloc(cols*sizeof(int))した行データの番地を入れることで、行ごとに独立したヒープ領域を持つ2次元配列を作れる。'},
+    ],
+  });
+}
+
+/* =====================================================================
+   chapter 6: 連結リストの構築
+   ===================================================================== */
+function buildList(root, ctx){
+  buildStepper(root, ctx, {
+    code:[
+      '#include <stdlib.h>',
+      '',
+      'typedef struct Node {',
+      '    int value;',
+      '    struct Node *next;',
+      '} Node;',
+      '',
+      'int main(void) {',
+      '    Node *head = (Node *)malloc(sizeof(Node));',
+      '    head->value = 1;',
+      '    head->next = NULL;',
+      '',
+      '    Node *second = (Node *)malloc(sizeof(Node));',
+      '    second->value = 2;',
+      '    second->next = NULL;',
+      '',
+      '    head->next = second;',
+      '',
+      '    Node *cur = head;',
+      '    while (cur != NULL) {',
+      '        printf("%d\\n", cur->value);',
+      '        cur = cur->next;',
+      '    }',
+      '',
+      '    free(second);',
+      '    free(head);',
+      '    return 0;',
+      '}',
+    ],
+    initMem: ()=> freshMem(['main']),
+    steps:[
+      {line:9, apply:(m)=>{
+        hblock(m,'h_n1','Node #1',16,{fields:[{key:'value',name:'value',value:'?'},{key:'next',name:'next',value:null,pointsTo:'WILD'}]});
+        svar(m,'main','s_head','head','Node *',null,'h_n1');
+      }, note:'<code>head = malloc(sizeof(Node));</code> — 1つ目のノードをヒープに確保。headがそれを指す。'},
+      {line:10, apply:(m)=>setField(m,'h_n1','value',{value:1}), note:'<code>head-&gt;value = 1;</code>'},
+      {line:11, apply:(m)=>setField(m,'h_n1','next',{pointsTo:'NULL'}), note:'<code>head-&gt;next = NULL;</code> — まだ次のノードがないのでNULLにしておく。'},
+      {line:13, apply:(m)=>{
+        hblock(m,'h_n2','Node #2',16,{fields:[{key:'value',name:'value',value:'?'},{key:'next',name:'next',value:null,pointsTo:'WILD'}]});
+        svar(m,'main','s_second','second','Node *',null,'h_n2');
+      }, note:'<code>second = malloc(sizeof(Node));</code> — 2つ目のノードを確保。'},
+      {line:14, apply:(m)=>setField(m,'h_n2','value',{value:2}), note:'<code>second-&gt;value = 2;</code>'},
+      {line:15, apply:(m)=>setField(m,'h_n2','next',{pointsTo:'NULL'}), note:'<code>second-&gt;next = NULL;</code>'},
+      {line:17, apply:(m)=>setField(m,'h_n1','next',{pointsTo:'h_n2'}), note:'<code>head-&gt;next = second;</code> — Node#1のnextフィールドがNode#2の番地を指すようになった。ヒープ上のノード同士がポインタで鎖のようにつながる。これがリンクリストの本質じゃ。'},
+      {line:19, apply:(m)=>svar(m,'main','s_cur','cur','Node *',null,'h_n1'), note:'<code>cur = head;</code> — 走査用のポインタcurをheadと同じ場所にセット。'},
+      {line:21, apply:(m)=>{}, note:'curはNULLではないのでループに入る。<code>cur-&gt;value</code>を出力: <b>1</b>'},
+      {line:22, apply:(m)=>setVar(m,'main','s_cur',{pointsTo:'h_n2'}), note:'<code>cur = cur-&gt;next;</code> — curがNode#2を指すよう進む。'},
+      {line:21, apply:(m)=>{}, note:'curはまだNULLではない。出力: <b>2</b>'},
+      {line:22, apply:(m)=>setVar(m,'main','s_cur',{pointsTo:'NULL'}), note:'Node#2のnextはNULLなので、curはNULLになる。'},
+      {line:19, apply:(m)=>{}, note:'cur == NULL なのでループを抜ける。'},
+      {line:24, apply:(m)=>hfree(m,'h_n2'), note:'<code>free(second);</code> — まず末尾のノードを解放。'},
+      {line:25, apply:(m)=>hfree(m,'h_n1'), note:'<code>free(head);</code> — 続けて先頭ノードも解放。今回はhead・secondを別々の変数で持っていたので順序を気にせず両方解放できた。もし全ノードをループでたどりながら解放する場合は、curをfreeする前に「次のノードの番地」を別の変数に保存しておく必要がある。先にfreeしてからcur->nextを読むと、解放済みメモリの読み取り(use-after-free)になってしまうからじゃ。'},
+      {line:26, apply:(m)=>popFrame(m,'main'), note:'mainが終了し、フレームが破棄された。'},
+    ],
+    quiz:[
+      {q:'head->next = second; によって、Node#1のnextフィールドは何を指すようになるか？', choices:['Node#2(secondが指す先)の番地','second変数自身が置かれているスタックの番地','常にNULL'], correct:0, explain:'head->nextにはsecondの値、つまりNode#2の番地が代入される。これでNode#1からNode#2へポインタの鎖がつながる。'},
+      {q:'リンクリストを1つのループで全ノードfreeするとき、なぜ「curをfreeする前に次のノードの番地を変数に保存しておく」必要があるのか？', choices:['freeした後にcur->nextを読むと、解放済みメモリを読むことになり危険だから','メモリ節約のため','コンパイラの制約でそうしないとエラーになるから'], correct:0, explain:'free(cur);した瞬間、curが指していた領域は「解放済み」になる。その後でcur->nextを読もうとすると、解放済みメモリへのアクセス(use-after-free)という未定義動作になってしまう。だから先に次のノードの番地を控えておくのが定石。'},
+    ],
+  });
+}
+
+/* =====================================================================
+   chapter 7: 典型的なバグ道場
+   ===================================================================== */
+const BUGS_CARDS = [
+  {
+    code:['int *p = malloc(sizeof(int));','*p = 5;','free(p);','printf("%d\\n", *p);   // ここ'],
+    q:'このコードに潜むバグの種類は？',
+    choices:['解放済みメモリの参照(use-after-free)','メモリリーク','未初期化ポインタの参照'],
+    correct:0,
+    explain:'free(p)の後もpの値は変わらないため、その後の*pは解放済みのヒープ領域を読むことになる。これがuse-after-free。',
+  },
+  {
+    code:['int *p = malloc(sizeof(int));','*p = 5;','free(p);','free(p);   // ここ'],
+    q:'このコードに潜むバグの種類は？',
+    choices:['二重解放(double free)','バッファオーバーフロー','NULLチェック忘れ'],
+    correct:0,
+    explain:'同じ領域を2回freeすると、メモリ管理の内部データが壊れ、未定義動作(クラッシュや脆弱性)につながる。1回freeしたら二度とfreeしてはいけない。',
+  },
+  {
+    code:['void f(void) {','    int *p = malloc(sizeof(int) * 10);','    *p = 1;','    // ここでreturnする。freeを呼んでいない','}'],
+    q:'このコードに潜むバグの種類は？',
+    choices:['メモリリーク','ダングリングポインタ','二重解放(double free)'],
+    correct:0,
+    explain:'確保したメモリをfreeせずに関数を抜けると、pというポインタ自体(スタック上の変数)は消えてしまうのに、指していたヒープ領域だけが取り残される。二度とアクセスも解放もできず、メモリリークになる。',
+  },
+  {
+    code:['int arr[5];','for (int i = 0; i <= 5; i++) {   // ここ','    arr[i] = i;','}'],
+    q:'このコードに潜むバグの種類は？',
+    choices:['バッファオーバーフロー(範囲外アクセス)','メモリリーク','二重解放(double free)'],
+    correct:0,
+    explain:'arrの有効な添字は0〜4。i<=5だとi==5のときarr[5]という配列の範囲外へ書き込んでしまう。これがバッファオーバーフロー。',
+  },
+  {
+    code:['int *p;   // 初期化していない','printf("%d\\n", *p);   // ここ'],
+    q:'このコードに潜むバグの種類は？',
+    choices:['未初期化ポインタ(wild pointer)の参照','メモリリーク','バッファオーバーフロー'],
+    correct:0,
+    explain:'pはNULLでも有効な番地でもなく、たまたまメモリに残っていたゴミ値を指している。これを「ワイルドポインタ」と呼び、参照すると何が起きるか予測できない。',
+  },
+  {
+    code:['int *p = malloc(sizeof(int) * 1000000000);','*p = 10;   // ここ　mallocの戻り値を確認していない'],
+    q:'このコードに潜むバグの種類は？',
+    choices:['NULLチェック忘れ(戻り値未確認)','ダングリングポインタ','二重解放(double free)'],
+    correct:0,
+    explain:'巨大な確保要求は失敗しやすく、その場合mallocはNULLを返す。戻り値を確認せず*pへ書き込むと、NULLポインタ参照というクラッシュにつながる。',
+  },
+];
+function buildBugs(root, ctx){
+  renderCodeQuizArea(root, BUGS_CARDS, ()=> ctx.complete());
+}
+
+/* =====================================================================
+   chapter 8: 総合チャレンジ（リスト削除関数を完成させる）
+   ===================================================================== */
+const FINAL_CARDS = [
+  {
+    code:[
+      'void deleteNode(Node **headRef, int value) {',
+      '    Node *cur = *headRef;',
+      '    Node *prev = NULL;',
+      '',
+      '    while (cur != NULL && cur->value != value) {',
+      '        prev = cur;',
+      '        cur = cur->next;',
+      '    }',
+      '    if (cur == NULL) return;   // 見つからなかった',
+      '',
+      '    if (prev == NULL) {',
+      '        ??? ここに入るコードは？',
+      '    } else {',
+      '        ……',
+      '    }',
+      '    ……',
+      '}',
+    ],
+    q:'先頭ノード(prevがNULL)を削除する場合、[???]に入る正しい処理は？',
+    choices:['*headRef = cur->next;','cur = cur->next;','headRef = cur->next;'],
+    correct:0,
+    explain:'先頭ノードを消す場合、呼び出し元のhead変数そのものを次のノードへ向け直す必要がある。headRefは&headで渡されたNode**なので、*headRef = ... と一段間接参照して初めて呼び出し元のhead自体を書き換えられる。',
+  },
+  {
+    code:[
+      'void deleteNode(Node **headRef, int value) {',
+      '    Node *cur = *headRef;',
+      '    Node *prev = NULL;',
+      '',
+      '    while (cur != NULL && cur->value != value) {',
+      '        prev = cur;',
+      '        cur = cur->next;',
+      '    }',
+      '    if (cur == NULL) return;   // 見つからなかった',
+      '',
+      '    if (prev == NULL) {',
+      '        *headRef = cur->next;',
+      '    } else {',
+      '        ??? ここに入るコードは？',
+      '    }',
+      '    ……',
+      '}',
+    ],
+    q:'先頭以外のノードを削除する場合、[???]に入る正しい処理は？',
+    choices:['prev->next = cur->next;','prev = cur->next;','cur->next = prev->next;'],
+    correct:0,
+    explain:'削除対象curを鎖から外すには、1つ手前のノードprevのnextフィールドを、curの次のノードへ直接つなぎ変える。これでcurは誰からも参照されなくなる。',
+  },
+  {
+    code:[
+      'void deleteNode(Node **headRef, int value) {',
+      '    Node *cur = *headRef;',
+      '    Node *prev = NULL;',
+      '',
+      '    while (cur != NULL && cur->value != value) {',
+      '        prev = cur;',
+      '        cur = cur->next;',
+      '    }',
+      '    if (cur == NULL) return;   // 見つからなかった',
+      '',
+      '    if (prev == NULL) {',
+      '        *headRef = cur->next;',
+      '    } else {',
+      '        prev->next = cur->next;',
+      '    }',
+      '    ??? ここに入るコードは？',
+      '}',
+    ],
+    q:'鎖から外したcurのノードに対して、最後にすべき処理は？',
+    choices:['free(cur);','free(prev);','free(headRef);'],
+    correct:0,
+    explain:'鎖から外しただけではメモリは解放されない。free(cur); で初めてヒープ領域が返却される。これを忘れるとメモリリークになる。',
+  },
+];
+function buildFinal(root, ctx){
+  renderCodeQuizArea(root, FINAL_CARDS, ()=> ctx.complete());
+}
+
+/* =====================================================================
+   stage definitions
+   ===================================================================== */
+const STAGES = [
+  {
+    key:'addr', title:'変数とアドレス', sub:'&演算子とスタック配置',
+    missionText:'コードを1行ずつ実行し、変数がスタックにどう置かれるかを確認しよう。最後にクイズ2問に答えてクリア。',
+    dialogue:[
+      {who:'shihan', text:'ポインタはもう使ったことがあるじゃろうが、まずは土台からおさらいしよう。変数は必ずメモリのどこかに「番地」を持って置かれておる。'},
+      {who:'deshi', text:'&を付けると番地が取れる、というやつですね。'},
+      {who:'shihan', text:'そうじゃ。今回は一行ずつコードを実行しながら、それを目で確かめてもらう。「次へ」を押して進めていこう。'},
+    ],
+    build: buildAddr,
+  },
+  {
+    key:'arith', title:'ポインタ演算と配列', sub:'arr[i] と *(arr+i)',
+    missionText:'ポインタ演算のステップを追いながら、配列とポインタの関係を確認しよう。',
+    dialogue:[
+      {who:'shihan', text:'配列名は、実はほとんどの場面で「先頭要素へのポインタ」として扱われる。これを配列の「decay(デケイ)」と呼ぶ。'},
+      {who:'deshi', text:'p = p + 1; ってバイト単位で+1されるんでしたっけ？'},
+      {who:'shihan', text:'よい質問じゃ。答えは「否」。実際にコードを追って確かめてみよう。'},
+    ],
+    build: buildArith,
+  },
+  {
+    key:'heap', title:'malloc/freeとヒープ管理', sub:'動的確保とダングリングポインタ',
+    missionText:'malloc・free・NULLチェックの流れを実行し、ダングリングポインタが生まれる瞬間を確認しよう。',
+    dialogue:[
+      {who:'shihan', text:'ここからが本題じゃ。スタックと違い、ヒープの確保・解放はプログラマが自分の手で管理せねばならん。'},
+      {who:'deshi', text:'free忘れとか、free後にまだ使っちゃうとか、あるあるですよね……。'},
+      {who:'shihan', text:'その「あるある」を、まさに今から目で見て体験してもらう。'},
+    ],
+    build: buildHeapMgmt,
+  },
+  {
+    key:'struct', title:'構造体とポインタ', sub:'->演算子とmalloc',
+    missionText:'mallocした構造体にメンバをセットし、->演算子の意味を確認しよう。',
+    dialogue:[
+      {who:'shihan', text:'構造体をヒープに確保するのも、intと変わらんやり方じゃ。sizeof(構造体名)で必要なバイト数を求めるのが定石じゃな。'},
+      {who:'deshi', text:'pl->id みたいな書き方、いつも何気なく使ってました。'},
+      {who:'shihan', text:'->の正体を、実際のメモリの動きと一緒に見てみよう。'},
+    ],
+    build: buildStruct,
+  },
+  {
+    key:'double', title:'二重ポインタ', sub:'関数の中でポインタ自体を書き換える',
+    missionText:'int**を使って、呼び出し元のポインタを関数の中から書き換える様子を確認しよう。',
+    dialogue:[
+      {who:'shihan', text:'ここは応用の山場じゃ。「関数の中でポインタ自体を書き換えたい」場合、なぜint**が必要になるのか。'},
+      {who:'deshi', text:'C言語は値渡しだから、int*で渡してもコピーが書き換わるだけ……ですよね？'},
+      {who:'shihan', text:'その通り。だからこそ、pのアドレス自体(&p)を渡す必要がある。実際に動かして体に叩き込もう。'},
+    ],
+    build: buildDouble,
+  },
+  {
+    key:'list', title:'連結リストの構築', sub:'ノードをmallocで鎖につなぐ',
+    missionText:'ノードをmallocし、ポインタでつなぎ、正しい順序でfreeする一連の流れを実行しよう。',
+    dialogue:[
+      {who:'shihan', text:'ポインタと構造体、malloc/freeが使えれば、連結リストはもう目の前じゃ。ヒープ上のノード同士を鎖のようにつなげてみよう。'},
+      {who:'deshi', text:'headとsecondをつなげて、たどって、最後は解放……という流れですね。'},
+      {who:'shihan', text:'その通り。特に「解放する順番」には注意が必要じゃ。実際に確かめてみよう。'},
+    ],
+    build: buildList,
+  },
+  {
+    key:'bugs', title:'典型的なバグ道場', sub:'ダングリング・二重解放・リーク…',
+    missionText:'6つのコード片を読み、そこに潜むメモリバグの種類を見抜こう。',
+    dialogue:[
+      {who:'shihan', text:'ここまで学んだ知識を使って、実際のバグを見抜く修行じゃ。コードだけを見て、何が起きているか言い当ててみよ。'},
+      {who:'deshi', text:'use-after-free、double free、メモリリーク、バッファオーバーフロー……いろいろありましたね。'},
+      {who:'shihan', text:'仕組みを知っていれば、なぜそのバグが起きるのかが説明できるようになる。6問、挑戦じゃ。'},
+    ],
+    build: buildBugs,
+  },
+  {
+    key:'final', title:'総合チャレンジ', sub:'リスト削除関数を完成させよう',
+    missionText:'不完全なリンクリストのノード削除関数を、正しい選択肢で埋めて完成させよう。',
+    dialogue:[
+      {who:'shihan', text:'最後の修行じゃ。連結リストから特定の値を持つノードを削除する関数を、3つの空欄を埋めて完成させてもらう。'},
+      {who:'deshi', text:'先頭ノードのときと、それ以外のときで処理が変わるやつですね。緊張します……。'},
+      {who:'shihan', text:'ここまでの章をすべて思い出せば解けるはずじゃ。腕試し、いってみよ。'},
+    ],
+    build: buildFinal,
+  },
+];
+
+/* ---------- shared state / persistence ---------- */
+const STORE_KEY = 'cPointerDojoProgress';
+const state = { unlocked:1, cleared:new Set(), currentIndex:0 };
+
+function loadProgress(){
+  try{
+    const raw = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
+    if(raw){
+      state.unlocked = raw.unlocked || 1;
+      state.cleared = new Set(raw.cleared || []);
+    }
+  }catch(e){}
+  if (new URLSearchParams(location.search).has('all')) state.unlocked = STAGES.length;
+}
+function saveProgress(){
+  localStorage.setItem(STORE_KEY, JSON.stringify({unlocked:state.unlocked, cleared:[...state.cleared]}));
+}
+
+/* ---------- dialogue renderer ---------- */
+function renderDialogue(lines){
+  return lines.map(l=>{
+    const isDeshi = l.who === 'deshi';
+    return `<div class="d-row ${isDeshi?'right':''}">
+      <div class="d-avatar ${l.who}">${l.who==='shihan' ? '🥋' : '🧑‍🎓'}</div>
+      <div class="d-bubble">
+        <div class="d-name">${l.who==='shihan' ? '師範' : 'ミナト（弟子）'}</div>
+        ${l.text}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ---------- sidebar / header ---------- */
+function renderSidebar(){
+  const list = qs('#side-list');
+  list.innerHTML = STAGES.map((s,i)=>{
+    const locked = i > state.unlocked - 1;
+    const cleared = state.cleared.has(i);
+    const active = i === state.currentIndex;
+    const icon = cleared ? '✅' : locked ? '🔒' : '📖';
+    return `<div class="side-item ${active?'active':''} ${locked?'locked':''}" data-index="${i}">
+      <span class="side-icon">${icon}</span>
+      <span class="side-text">
+        <div class="side-main">第${i+1}章 ${s.title}</div>
+        <div class="side-sub">${s.sub}</div>
+      </span>
+    </div>`;
+  }).join('');
+  list.querySelectorAll('.side-item').forEach(item=>{
+    item.addEventListener('click', ()=>{
+      const i = Number(item.dataset.index);
+      if(i > state.unlocked - 1) return;
+      mountStage(i);
+    });
+  });
+
+  qs('#progress-label').textContent = `クリア ${state.cleared.size} / ${STAGES.length}`;
+  qs('#progress-fill').style.width = (state.cleared.size / STAGES.length * 100) + '%';
+}
+
+qs('#btn-reset-all').addEventListener('click', ()=>{
+  if(!confirm('進行状況をすべてリセットして最初からやり直しますか？')) return;
+  state.unlocked = 1; state.cleared = new Set();
+  saveProgress();
+  mountStage(0);
+});
+
+/* ---------- stage mount / navigation ---------- */
+function mountStage(index){
+  state.currentIndex = index;
+  const meta = STAGES[index];
+  const main = qs('#main-area');
+  main.innerHTML = `
+    <div class="chapter-head">
+      <span class="chapter-badge">第${index+1}章</span><span class="chapter-title">${meta.title}</span>
+      <div class="chapter-sub">${meta.sub}</div>
+    </div>
+    <div class="dialogue-scene">${renderDialogue(meta.dialogue)}</div>
+    <div class="mission-box">
+      <div class="mission-label">🎯 お題</div>
+      <div class="mission-text">${meta.missionText}</div>
+      <div class="mission-status" id="mission-status">${state.cleared.has(index) ? '達成！' : '未達成'}</div>
+    </div>
+    <div class="stage-play" id="stage-play"></div>
+    <div class="stage-nav">
+      <button class="btn" id="btn-retry">↺ このステージをやり直す</button>
+      <button class="btn btn-primary" id="btn-next" ${state.cleared.has(index) ? '' : 'disabled'}>
+        ${index === STAGES.length-1 ? 'クリア画面へ ▶' : 'つぎのステージへ ▶'}
+      </button>
+    </div>
+  `;
+  if(state.cleared.has(index)) qs('#mission-status').classList.add('ok');
+
+  qs('#btn-retry').addEventListener('click', ()=> mountStage(index));
+  qs('#btn-next').addEventListener('click', ()=>{
+    if(index === STAGES.length-1) showEnding();
+    else mountStage(index+1);
+  });
+
+  const ctx = {
+    complete(){
+      if(state.cleared.has(index)) return;
+      state.cleared.add(index);
+      state.unlocked = Math.max(state.unlocked, index+2);
+      saveProgress();
+      const statusEl = qs('#mission-status');
+      statusEl.textContent = '達成！';
+      statusEl.classList.add('ok');
+      qs('#btn-next').removeAttribute('disabled');
+      renderSidebar();
+    },
+  };
+  meta.build(qs('#stage-play'), ctx);
+  renderSidebar();
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+
+function showEnding(){
+  const main = qs('#main-area');
+  main.innerHTML = `
+    <div class="ending">
+      <h2>🥋 C POINTER DOJO・皆伝！</h2>
+      <p>変数とアドレス・ポインタ演算・malloc/free・構造体とポインタ・二重ポインタ・連結リスト・典型的なバグ・総合チャレンジ。<br>ポインタ道場の全課程を修めたね。</p>
+      <div class="ending-list">
+        ✅ &演算子 = 変数が置かれている番地を取り出す<br>
+        ✅ ポインタ演算 = 指す型のサイズ単位で進む<br>
+        ✅ malloc/free = ヒープの確保と解放は手動で対にする<br>
+        ✅ ダングリングポインタ = 解放後も古い番地を指したままの状態<br>
+        ✅ pl->id = (*pl).id の糖衣構文<br>
+        ✅ int** = 関数の中で呼び出し元のポインタ自体を書き換える手段<br>
+        ✅ 連結リスト = ヒープ上のノードをポインタで鎖につなぐ構造<br>
+        ✅ 典型的なバグ = use-after-free・double free・メモリリーク・バッファオーバーフロー
+      </div>
+      <button class="btn btn-primary" id="btn-replay">↺ はじめから修行しなおす</button>
+    </div>
+  `;
+  qs('#btn-replay').addEventListener('click', ()=>{
+    state.unlocked = 1; state.cleared = new Set();
+    saveProgress();
+    mountStage(0);
+  });
+  state.currentIndex = -1;
+  renderSidebar();
+}
+
+/* ---------- boot ---------- */
+loadProgress();
+mountStage(Math.min(state.currentIndex, state.unlocked-1));
+</script>
+</body>
+</html>
