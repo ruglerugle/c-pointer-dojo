@@ -181,6 +181,12 @@ body{font-family:var(--f);color:var(--ink);font-weight:600;min-height:100vh;
 .ending h2{font-size:22px;margin-bottom:14px;color:#1c2f2b}
 .ending p{font-size:13.5px;line-height:1.8;color:#3a2c08;margin-bottom:16px}
 .ending-list{text-align:left;display:inline-block;background:#fff8e6;border:1px solid #e3c877;border-radius:10px;padding:14px 18px;font-size:12.5px;line-height:2;color:#3a2c08;margin-bottom:18px}
+
+/* Book recommendation */
+#book-recommend{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(0,0,0,.14));border:1px solid rgba(255,255,255,.15);border-radius:12px;padding:10px 16px}
+.book-recommend-label{display:inline-block;font-size:10px;font-weight:900;color:#cfe4de;border:1px solid #cfe4de;border-radius:4px;padding:0 5px;margin:0 0 6px}
+.book-recommend-lead{font-size:12px;color:#cfe4de;margin:0 0 4px;font-weight:700}
+#book-recommend a{font-size:13px;color:#f3c47a;font-weight:900;text-decoration:underline}
 </style>
 </head>
 <body>
@@ -204,6 +210,8 @@ body{font-family:var(--f);color:var(--ink);font-weight:600;min-height:100vh;
     </aside>
     <main class="main-area" id="main-area"></main>
   </div>
+
+  <div id="book-recommend"></div>
 </div>
 
 <script>
@@ -1153,9 +1161,25 @@ function showEnding(){
   renderSidebar();
 }
 
+/* ---------- book recommendation ---------- */
+const BOOK_RECOMMEND = {
+  title: '前橋和弥『新・標準プログラマーズライブラリ C言語 ポインタ完全制覇』(技術評論社)',
+  url: 'https://www.amazon.co.jp/dp/477419381X?tag=senjin-22',
+};
+function renderBookRecommend(){
+  const el = qs('#book-recommend');
+  if(!el) return;
+  el.innerHTML = `
+    <p class="book-recommend-label">参考文献</p>
+    <p class="book-recommend-lead">道場の修行だけでは物足りない方へ。ポインタだけを扱った定番書でさらに深く学べる。</p>
+    <a href="${BOOK_RECOMMEND.url}" target="_blank" rel="sponsored noopener">${escapeHtml(BOOK_RECOMMEND.title)}</a>
+  `;
+}
+
 /* ---------- boot ---------- */
 loadProgress();
 mountStage(Math.min(state.currentIndex, state.unlocked-1));
+renderBookRecommend();
 </script>
 </body>
 </html>
