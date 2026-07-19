@@ -481,9 +481,9 @@ function buildStepper(root, ctx, cfg){
       </div>
       <div class="step-note" id="step-note"></div>
       <div class="step-controls">
-        <button class="btn" id="btn-prev">◀ 前へ</button>
+        <button class="btn" id="step-prev">◀ 前へ</button>
         <span class="step-progress" id="step-progress"></span>
-        <button class="btn btn-primary" id="btn-next">次へ ▶</button>
+        <button class="btn btn-primary" id="step-next">次へ ▶</button>
       </div>
       <div class="quiz-area" id="quiz-area"></div>
     </div>
@@ -509,8 +509,8 @@ function buildStepper(root, ctx, cfg){
     drawArrows(root, mem);
     qs('#step-note', root).innerHTML = stepIdx < 0 ? '▶ 「次へ」を押してコードの実行を始めよう。' : cfg.steps[stepIdx].note;
     qs('#step-progress', root).textContent = `${stepIdx+1} / ${cfg.steps.length}`;
-    qs('#btn-prev', root).disabled = stepIdx < 0;
-    qs('#btn-next', root).disabled = stepIdx >= cfg.steps.length - 1;
+    qs('#step-prev', root).disabled = stepIdx < 0;
+    qs('#step-next', root).disabled = stepIdx >= cfg.steps.length - 1;
     if(stepIdx >= cfg.steps.length - 1 && !quizMounted){
       quizMounted = true;
       const area = qs('#quiz-area', root);
@@ -519,8 +519,8 @@ function buildStepper(root, ctx, cfg){
     }
   }
 
-  qs('#btn-prev', root).addEventListener('click', ()=>{ if(stepIdx>=0){ stepIdx--; render(); } });
-  qs('#btn-next', root).addEventListener('click', ()=>{ if(stepIdx<cfg.steps.length-1){ stepIdx++; render(); } });
+  qs('#step-prev', root).addEventListener('click', ()=>{ if(stepIdx>=0){ stepIdx--; render(); } });
+  qs('#step-next', root).addEventListener('click', ()=>{ if(stepIdx<cfg.steps.length-1){ stepIdx++; render(); } });
   window._currentArrowRedraw = ()=> drawArrows(root, computeMem());
   render();
 }
