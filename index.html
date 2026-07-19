@@ -388,11 +388,27 @@ function drawArrows(root, mem){
     const toEl = qs('#'+CSS.escape('box-'+a.toId), root);
     if(!fromEl || !toEl) return;
     const fr = fromEl.getBoundingClientRect(), tr = toEl.getBoundingClientRect();
-    const x1 = fr.right - wrapRect.left, y1 = fr.top + fr.height/2 - wrapRect.top;
-    const x2 = tr.left - wrapRect.left, y2 = tr.top + tr.height/2 - wrapRect.top;
-    const mx = (x1+x2)/2;
+    const frCx = fr.left + fr.width/2, frCy = fr.top + fr.height/2;
+    const trCx = tr.left + tr.width/2, trCy = tr.top + tr.height/2;
+    const dx = Math.abs(trCx - frCx), dy = Math.abs(trCy - frCy);
+    let x1, y1, x2, y2, d;
+    if(dy > dx){
+      // 縦に積まれている関係(モバイルの縦積みレイアウトや、フレームをまたぐ矢印)は上下でつなぐ
+      const fromIsBelow = frCy > trCy;
+      x1 = frCx - wrapRect.left; y1 = (fromIsBelow ? fr.top : fr.bottom) - wrapRect.top;
+      x2 = trCx - wrapRect.left; y2 = (fromIsBelow ? tr.bottom : tr.top) - wrapRect.top;
+      const my = (y1+y2)/2;
+      d = `M${x1},${y1} C${x1},${my} ${x2},${my} ${x2},${y2}`;
+    } else {
+      // 横に並んでいる関係(デスクトップのスタック/ヒープ2列)は左右でつなぐ
+      const fromIsLeft = frCx < trCx;
+      x1 = (fromIsLeft ? fr.right : fr.left) - wrapRect.left; y1 = frCy - wrapRect.top;
+      x2 = (fromIsLeft ? tr.left : tr.right) - wrapRect.left; y2 = trCy - wrapRect.top;
+      const mx = (x1+x2)/2;
+      d = `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`;
+    }
     const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-    path.setAttribute('d', `M${x1},${y1} C${mx},${y1} ${mx},${y2} ${x2},${y2}`);
+    path.setAttribute('d', d);
     path.setAttribute('class', 'arrow-path' + (a.dangling ? ' dangling' : ''));
     path.setAttribute('marker-end', a.dangling ? 'url(#arrowhead-ng)' : 'url(#arrowhead)');
     svg.appendChild(path);
