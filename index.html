@@ -536,8 +536,8 @@ function buildAddr(root, ctx){
     steps:[
       {line:4, apply:(m)=>svar(m,'main','s_a','a','int',10), note:'変数 <b>a</b> がスタックに置かれ、値10が格納された。右側に自動で割り振られた番地(アドレス)が表示されている。'},
       {line:5, apply:(m)=>svar(m,'main','s_b','b','int',20), note:'続けて変数 <b>b</b> が積まれた。スタックは呼ばれた順に積み上がっていく。'},
-      {line:6, apply:(m)=>{}, note:'<code>&a</code> は「aが置かれている番地」を取り出す演算子じゃ。出力例: <code>0x7ffee24c</code>'},
-      {line:7, apply:(m)=>{}, note:'同様に <code>&b</code> でbの番地が得られる。出力例: <code>0x7ffee248</code>'},
+      {line:6, apply:(m)=>{}, note:'<code>&a</code> は「aが置かれている番地」を取り出す演算子じゃ。出力例: <code>0x7ffee25c</code>（上のスタック図でaの番地として表示されている値と同じじゃ）'},
+      {line:7, apply:(m)=>{}, note:'同様に <code>&b</code> でbの番地が得られる。出力例: <code>0x7ffee258</code>（上のスタック図のbの番地と同じ）'},
       {line:8, apply:(m)=>{}, note:'<code>return 0;</code> でmainの終了処理に入る。'},
       {line:9, apply:(m)=>popFrame(m,'main'), note:'mainが終了。スタックフレームがまとめて破棄され、a・bのメモリは自動的に返却される。ヒープと違い、スタックの解放はコンパイラが自動でやってくれる。'},
     ],
