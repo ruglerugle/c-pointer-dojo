@@ -48,7 +48,7 @@ body{font-family:var(--f);color:var(--ink);font-weight:600;min-height:100vh;
 
 /* Layout */
 .game-layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:14px;align-items:start}
-@media(max-width:820px){.game-layout{grid-template-columns:1fr}}
+@media(max-width:820px){.game-layout{grid-template-columns:minmax(0,1fr)}}
 
 /* Sidebar */
 .side-panel{background:linear-gradient(180deg,rgba(12,74,69,.92),rgba(8,28,29,.95));border:1px solid rgba(255,255,255,.16);
@@ -121,7 +121,8 @@ body{font-family:var(--f);color:var(--ink);font-weight:600;min-height:100vh;
 .quiz-explain{margin-top:9px;font-size:12.5px;line-height:1.6;color:#3a2c08;background:#fff8e6;border:1px solid #e3c877;border-radius:8px;padding:8px 10px}
 
 /* ===== Code stepper ===== */
-.stepper{display:flex;flex-direction:column;gap:12px}
+.stepper{display:flex;flex-direction:column;gap:12px;min-width:0}
+.stepper > *{min-width:0}
 .panel-head{font-size:12px;font-weight:900;color:var(--muted);margin-bottom:6px}
 .code-panel{background:#0e1613;border-radius:10px;padding:12px 4px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
 .code-panel .panel-head{color:#9fd6c6;padding:0 12px;margin-bottom:8px}
@@ -136,10 +137,10 @@ body{font-family:var(--f);color:var(--ink);font-weight:600;min-height:100vh;
 .tk-num{color:#9fd6c6}
 .tk-cm{color:#5c8a7c;font-style:italic}
 
-.mem-panel-wrap{position:relative;display:grid;grid-template-columns:1fr 1fr;gap:14px;background:#fbf7ea;border:1px solid var(--line);border-radius:10px;padding:12px}
-@media(max-width:640px){.mem-panel-wrap{grid-template-columns:1fr}}
+.mem-panel-wrap{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;background:#fbf7ea;border:1px solid var(--line);border-radius:10px;padding:12px}
+@media(max-width:640px){.mem-panel-wrap{grid-template-columns:minmax(0,1fr)}}
 .mem-col-head{font-size:12px;font-weight:900;color:var(--muted);margin-bottom:8px}
-.mem-col-body{display:flex;flex-direction:column;gap:10px;min-height:40px}
+.mem-col-body{display:flex;flex-direction:column;gap:10px;min-height:40px;min-width:0}
 .arrow-svg{position:absolute;inset:0;pointer-events:none;overflow:visible}
 .arrow-path{fill:none;stroke:var(--ptr);stroke-width:2}
 .arrow-path.dangling{stroke:var(--ng);stroke-dasharray:4 3}
