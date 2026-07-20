@@ -79,19 +79,34 @@ a.head-reset{text-decoration:none;display:inline-flex;align-items:center}
 .chapter-title{display:inline;font-size:20px;font-weight:950;color:#1c2f2b}
 .chapter-sub{font-size:13px;color:var(--muted);margin-top:4px;font-weight:700}
 
-/* Dialogue */
+/* Dialogue（net-quest/oop-gameと共通のdialog-row構造） */
 .dialogue-scene{display:flex;flex-direction:column;gap:8px;margin:14px 0 16px}
-.d-row{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;align-items:center;
-  background:linear-gradient(180deg,#fff,var(--paper2));border:1px solid var(--line);border-radius:10px;padding:9px 12px}
-.d-row.right{grid-template-columns:minmax(0,1fr) 64px}
-.d-row.right .d-avatar{order:2}
-.d-row.right .d-bubble{order:1}
-.d-avatar{width:56px;height:56px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:28px;
-  box-shadow:0 3px 6px rgba(0,0,0,.18);flex-shrink:0}
-.d-avatar.shihan{background:linear-gradient(#fde3d6,#f7c2a4)}
-.d-avatar.deshi{background:linear-gradient(#dcefe9,#b9dcd0)}
-.d-bubble{font-size:13.5px;line-height:1.75;color:#251c3c;font-weight:700}
-.d-name{font-size:10.5px;font-weight:900;color:var(--muted);margin-bottom:2px}
+.dialog-row{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px;align-items:stretch;border:1px solid var(--line);background:var(--paper2);border-radius:10px;padding:10px 12px;box-shadow:0 2px 0 rgba(0,0,0,.04)}
+.dialog-row.right{grid-template-columns:minmax(0,1fr) 96px}
+.dialog-row.right .dialog-character{order:2}
+.dialog-row.right .dialog-bubble{order:1}
+.dialog-character{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0}
+.dialog-avatar{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 3px 6px rgba(0,0,0,.18);flex-shrink:0}
+.dialog-avatar.shihan{background:linear-gradient(#fde3d6,#f7c2a4)}
+.dialog-avatar.deshi{background:linear-gradient(#dcefe9,#b9dcd0)}
+.dialog-name{padding:3px 10px;border-radius:7px;color:#fff;font-weight:900;font-size:11px;line-height:1.2;box-shadow:0 2px 0 rgba(0,0,0,.16);white-space:nowrap;text-align:center}
+.dialog-name.shihan{background:linear-gradient(#f0a868,#c1743a)}
+.dialog-name.deshi{background:linear-gradient(#5cc2ab,#2f8f78)}
+.dialog-bubble{position:relative;align-self:center;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:11px 14px;color:var(--ink);font-size:13.5px;line-height:1.75;font-weight:700;min-height:56px;display:flex;flex-direction:column;justify-content:center}
+.dialog-bubble::before{content:"";position:absolute;left:-10px;top:50%;transform:translateY(-50%);width:0;height:0;border-top:8px solid transparent;border-bottom:8px solid transparent;border-right:10px solid var(--line)}
+.dialog-bubble::after{content:"";position:absolute;left:-8px;top:50%;transform:translateY(-50%);width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent;border-right:9px solid var(--paper)}
+.dialog-row.right .dialog-bubble::before{left:auto;right:-10px;border-right:0;border-left:10px solid var(--line)}
+.dialog-row.right .dialog-bubble::after{left:auto;right:-8px;border-right:0;border-left:9px solid var(--paper)}
+@media (max-width:700px){
+  .dialog-row,.dialog-row.right{grid-template-columns:74px minmax(0,1fr);padding:8px;gap:8px}
+  .dialog-row.right .dialog-character{order:0}
+  .dialog-row.right .dialog-bubble{order:1}
+  .dialog-avatar{width:52px;height:52px;font-size:24px}
+  .dialog-name{font-size:9.5px;padding:3px 7px}
+  .dialog-bubble{font-size:13px;padding:9px 11px;min-height:0}
+  .dialog-row.right .dialog-bubble::before{left:-10px;right:auto;border-left:0;border-right:10px solid var(--line)}
+  .dialog-row.right .dialog-bubble::after{left:-8px;right:auto;border-left:0;border-right:9px solid var(--paper)}
+}
 
 /* Mission box */
 .mission-box{background:linear-gradient(180deg,#fff8e6,#fdefc9);border:1px solid #e3c877;border-radius:10px;padding:12px 14px;margin-bottom:14px}
@@ -1059,12 +1074,11 @@ function saveProgress(){
 function renderDialogue(lines){
   return lines.map(l=>{
     const isDeshi = l.who === 'deshi';
-    return `<div class="d-row ${isDeshi?'right':''}">
-      <div class="d-avatar ${l.who}">${l.who==='shihan' ? '🥋' : '🧑‍🎓'}</div>
-      <div class="d-bubble">
-        <div class="d-name">${l.who==='shihan' ? '師範' : 'ミナト（弟子）'}</div>
-        ${l.text}
-      </div>
+    const icon = l.who==='shihan' ? '🥋' : '🧑‍🎓';
+    const name = l.who==='shihan' ? '師範' : 'ミナト（弟子）';
+    return `<div class="dialog-row${isDeshi?' right':''}">
+      <div class="dialog-character"><div class="dialog-avatar ${l.who}">${icon}</div><div class="dialog-name ${l.who}">${name}</div></div>
+      <div class="dialog-bubble">${l.text}</div>
     </div>`;
   }).join('');
 }
