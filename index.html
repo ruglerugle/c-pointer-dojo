@@ -86,10 +86,10 @@ a.head-reset{text-decoration:none;display:inline-flex;align-items:center}
 .dialog-row.right .dialog-character{order:2}
 .dialog-row.right .dialog-bubble{order:1}
 .dialog-character{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;min-width:0}
-.dialog-avatar{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 3px 6px rgba(0,0,0,.18);flex-shrink:0}
+.dialog-avatar{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:30px;box-shadow:0 3px 6px rgba(0,0,0,.18);flex-shrink:0;position:relative;z-index:1}
 .dialog-avatar.shihan{background:linear-gradient(#fde3d6,#f7c2a4)}
 .dialog-avatar.deshi{background:linear-gradient(#dcefe9,#b9dcd0)}
-.dialog-name{padding:3px 10px;border-radius:7px;color:#fff;font-weight:900;font-size:11px;line-height:1.2;box-shadow:0 2px 0 rgba(0,0,0,.16);white-space:nowrap;text-align:center}
+.dialog-name{padding:3px 10px;border-radius:7px;color:#fff;font-weight:900;font-size:11px;line-height:1.2;box-shadow:0 2px 0 rgba(0,0,0,.16);white-space:nowrap;text-align:center;position:relative;z-index:2}
 .dialog-name.shihan{background:linear-gradient(#f0a868,#c1743a)}
 .dialog-name.deshi{background:linear-gradient(#5cc2ab,#2f8f78)}
 .dialog-bubble{position:relative;align-self:center;background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:11px 14px;color:var(--ink);font-size:13.5px;line-height:1.75;font-weight:700;min-height:56px;display:flex;flex-direction:column;justify-content:center}
