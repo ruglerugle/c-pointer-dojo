@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>C POINTER DOJO ― ゲームで学ぶC言語ポインタ入門（ポインタ道場）</title>
+<title>C言語ポインタ道場 ― ゲームで学ぶポインタ入門（コードで見るメモリの動き）</title>
 <meta name="description" content="変数とアドレス・ポインタ演算・malloc/free・構造体・二重ポインタ・連結リストまで、Cコードを1行ずつ実行しながらスタックとヒープの動きを目で学べる無料のポインタ学習ゲーム。全8章。">
 <link rel="canonical" href="https://informatics.habatakijuku.com/c-pointer-dojo/">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="C POINTER DOJO">
+<meta property="og:site_name" content="C言語ポインタ道場">
 <meta property="og:locale" content="ja_JP">
-<meta property="og:title" content="C POINTER DOJO ― ゲームで学ぶC言語ポインタ入門（ポインタ道場）">
+<meta property="og:title" content="C言語ポインタ道場 ― ゲームで学ぶポインタ入門（コードで見るメモリの動き）">
 <meta property="og:description" content="Cコードを1行ずつ実行しながら、ポインタとメモリ管理を目で学べる無料学習ゲーム。">
 <meta property="og:url" content="https://informatics.habatakijuku.com/c-pointer-dojo/">
 <meta property="og:image" content="https://informatics.habatakijuku.com/images/ogp/c-pointer-dojo.png">
@@ -21,7 +21,8 @@
 {
   "@context": "https://schema.org",
   "@type": "LearningResource",
-  "name": "C POINTER DOJO ― ポインタ道場 ―",
+  "name": "C言語ポインタ道場 ― コードで見るメモリの動き ―",
+  "alternateName": "C POINTER DOJO",
   "description": "変数とアドレス・ポインタ演算・malloc/free・構造体・二重ポインタ・連結リストまで、Cコードを1行ずつ実行しながらスタックとヒープの動きを目で学べる無料のポインタ学習ゲーム。",
   "url": "https://informatics.habatakijuku.com/c-pointer-dojo/",
   "inLanguage": "ja",
@@ -244,8 +245,8 @@ a.head-reset{text-decoration:none;display:inline-flex;align-items:center}
 <div class="app-shell">
   <header class="game-header">
     <div class="brand">
-      <h1 class="brand-title">🥋 C POINTER DOJO</h1>
-      <div class="brand-sub">― ポインタ道場 ―</div>
+      <h1 class="brand-title">🥋 C言語ポインタ道場</h1>
+      <div class="brand-sub">― コードで見るメモリの動き ―</div>
     </div>
     <div class="head-progress-wrap">
       <div class="head-progress-label" id="progress-label">クリア 0 / 8</div>
@@ -1204,7 +1205,7 @@ function showEnding(){
   const main = qs('#main-area');
   main.innerHTML = `
     <div class="ending">
-      <h2>🥋 C POINTER DOJO・皆伝！</h2>
+      <h2>🥋 C言語ポインタ道場・皆伝！</h2>
       <p>変数とアドレス・ポインタ演算・malloc/free・構造体とポインタ・二重ポインタ・連結リスト・典型的なバグ・総合チャレンジ。<br>ポインタ道場の全課程を修めたね。</p>
       <div class="ending-list">
         ✅ &演算子 = 変数が置かれている番地を取り出す<br>
@@ -1218,8 +1219,8 @@ function showEnding(){
       </div>
       <button class="btn btn-primary" id="btn-replay">↺ はじめから修行しなおす</button>
       <div class="ending-links">
-        <a class="ending-link share" href="https://x.com/intent/post?text=${encodeURIComponent('C POINTER DOJO 皆伝！🥋 Cのポインタとメモリ管理をステップ実行で学べる無料学習ゲーム')}&url=${encodeURIComponent('https://informatics.habatakijuku.com/c-pointer-dojo/')}" target="_blank" rel="noopener">𝕏 皆伝を報告する</a>
-        <a class="ending-link" href="/memory-quest/">🧠 メモリの仕組みを概念から ― MEMORY QUEST</a>
+        <a class="ending-link share" href="https://x.com/intent/post?text=${encodeURIComponent('C言語ポインタ道場 皆伝！🥋 Cのポインタとメモリ管理をステップ実行で学べる無料学習ゲーム')}&url=${encodeURIComponent('https://informatics.habatakijuku.com/c-pointer-dojo/')}" target="_blank" rel="noopener">𝕏 皆伝を報告する</a>
+        <a class="ending-link" href="/memory-quest/">🧠 メモリの仕組みを概念から ― メモリのしくみクエスト</a>
         <a class="ending-link" href="/">🧭 他のクエストも遊ぶ</a>
       </div>
     </div>
