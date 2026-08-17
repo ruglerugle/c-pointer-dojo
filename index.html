@@ -233,6 +233,11 @@ a.head-reset{text-decoration:none;display:inline-flex;align-items:center}
 .book-recommend-label{display:inline-block;font-size:10px;font-weight:900;color:#cfe4de;border:1px solid #cfe4de;border-radius:4px;padding:0 5px;margin:0 0 6px}
 .book-recommend-lead{font-size:12px;color:#cfe4de;margin:0 0 4px;font-weight:700}
 #book-recommend a{font-size:13px;color:#f3c47a;font-weight:900;text-decoration:underline}
+
+/* ===== クリア画面のリンク ===== */
+.ending-links{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:14px}
+.ending-link{display:inline-block;padding:10px 18px;border-radius:9px;font-weight:900;font-size:14px;text-decoration:none;border:1px solid var(--line);background:var(--paper2);color:var(--ink)}
+.ending-link.share{background:#111;border-color:#222;color:#fff}
 </style>
 </head>
 <body>
@@ -1212,6 +1217,11 @@ function showEnding(){
         ✅ 典型的なバグ = use-after-free・double free・メモリリーク・バッファオーバーフロー
       </div>
       <button class="btn btn-primary" id="btn-replay">↺ はじめから修行しなおす</button>
+      <div class="ending-links">
+        <a class="ending-link share" href="https://x.com/intent/post?text=${encodeURIComponent('C POINTER DOJO 皆伝！🥋 Cのポインタとメモリ管理をステップ実行で学べる無料学習ゲーム')}&url=${encodeURIComponent('https://informatics.habatakijuku.com/c-pointer-dojo/')}" target="_blank" rel="noopener">𝕏 皆伝を報告する</a>
+        <a class="ending-link" href="/memory-quest/">🧠 メモリの仕組みを概念から ― MEMORY QUEST</a>
+        <a class="ending-link" href="/">🧭 他のクエストも遊ぶ</a>
+      </div>
     </div>
   `;
   qs('#btn-replay').addEventListener('click', ()=>{
