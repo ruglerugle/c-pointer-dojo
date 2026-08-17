@@ -1243,9 +1243,10 @@ function renderBookRecommend(){
   const el = qs('#book-recommend');
   if(!el) return;
   el.innerHTML = `
-    <p class="book-recommend-label">参考文献</p>
+    <p class="book-recommend-label">参考文献［PR］</p>
     <p class="book-recommend-lead">道場の修行だけでは物足りない方へ。ポインタだけを扱った定番書でさらに深く学べる。</p>
     <a href="${BOOK_RECOMMEND.url}" target="_blank" rel="sponsored noopener">${escapeHtml(BOOK_RECOMMEND.title)}</a>
+    <p class="pr-disclosure" style="font-size:10.5px;color:#8a8577;margin:8px 0 0;font-weight:600;line-height:1.5">※ Amazonのアソシエイトとして、当サイトは適格販売により収入を得ています。</p>
   `;
 }
 
