@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#123334">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-9RTQCP2HXM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-9RTQCP2HXM');
+</script>
+<title>STAGE4 構造体とポインタ ― C言語ポインタ道場</title>
+<meta name="description" content="いくつかの値をひとまとめにする構造体。int 4バイトと double 8バイトの構造体が16バイトになる理由（すき間＝パディング）と、ポインタからメンバに触れる -&gt; の意味を、ヒープに構造体を借りるコードで確かめる。">
+<link rel="canonical" href="https://informatics.habatakijuku.com/c-pointer-dojo/stage4">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="C言語ポインタ道場">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="STAGE4 構造体とポインタ ― C言語ポインタ道場">
+<meta property="og:description" content="構造体とポインタ。-&gt; の意味と、構造体にすき間ができる理由。">
+<meta property="og:url" content="https://informatics.habatakijuku.com/c-pointer-dojo/stage4">
+<meta property="og:image" content="https://informatics.habatakijuku.com/images/ogp/c-pointer-dojo.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥋</text></svg>">
+<link rel="stylesheet" href="design-system.css?v=20261108a">
+<link rel="stylesheet" href="stepper.css?v=20261108a">
+<script src="js/stages.js?v=20261108a"></script>
+<script src="js/progress.js?v=20261108a"></script>
+<script src="js/stepper.js?v=20261108a"></script>
+</head>
+<body>
+<div class="app-shell side-collapsed" id="app-shell">
+  <header class="game-header">
+    <div class="brand">
+      <div class="brand-title"><a class="head-reset home-badge" href="./" title="トップへ" aria-label="トップへ">🥋</a> <span>C言語ポインタ道場</span></div>
+      <div class="brand-sub">STAGE 4 ― 構造体とポインタ ―</div>
+    </div>
+    <div class="head-progress-wrap">
+      <div class="head-progress-label" id="progress-label">クリア 0 / 8</div>
+      <div class="head-progress" role="progressbar" aria-label="クリア済みステージ数" aria-valuemin="0" aria-valuemax="8" aria-valuenow="0"><div class="head-progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div class="header-actions">
+      <a class="head-reset" href="/" title="情報の冒険（シリーズの地図）へ">🧭 地図</a>
+      <button class="head-reset" id="btn-reset-all">🔄 最初から</button>
+      <button class="head-reset" id="head-nav-toggle" title="ステージ一覧の表示切替">☰ ナビ</button>
+    </div>
+  </header>
+
+  <div class="game-layout">
+    <div class="side-backdrop" id="side-backdrop"></div>
+    <aside class="side-panel">
+      <div class="side-head">
+        <button class="side-toggle" id="sidebar-toggle" title="ステージ一覧の表示切替" aria-label="ステージ一覧の表示切替">☰</button>
+        <span class="side-head-text">📚 ステージ一覧</span>
+      </div>
+      <div class="side-list" id="side-list"></div>
+    </aside>
+
+    <main class="main-area">
+      <div class="chapter-head">
+        <span class="chapter-badge">STAGE 4</span><h1 class="chapter-title">構造体とポインタ</h1>
+        <div class="chapter-sub">-> とすき間（パディング）</div>
+      </div>
+
+      <div class="mission-box">
+        <div class="mission-label">🎯 ミッション</div>
+        <div class="mission-text">構造体の並び方（パディング）と、-> が (*p).メンバ の省略であることを説明できるようになろう。コードを最後の行まで実行し、確認クイズに全問正解すれば合格。</div>
+        <span class="mission-status" id="mission-status">未達成</span>
+      </div>
+
+      <div class="dialogue-scene">
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">ゲームのプレイヤーの「番号」と「得点」のように、いくつかの値をひとまとめにして扱いたいことがある。そのための道具が<strong>構造体</strong>だ。</div>
+        </div>
+      </div>
+      <div class="formula-box">
+        <span class="step"><pre>typedef struct {
+          int id;        // 番号（4バイト）
+          double score;  // 得点（8バイト。小数を入れられる数）
+      } Player;</pre></span>
+        <span class="step">typedef … Player; で、このまとまりに Player という型の名前を付ける。中の id や score を<strong>メンバ</strong>と呼ぶ</span>
+      </div>
+      <div class="dialogue-scene">
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbitThink.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble"> int が4バイト、double が8バイトだから、Player は12バイトですね。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">そう思うよね。ところが、多くの環境で <code>sizeof(Player)</code> は <strong>16</strong> になる。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">4バイトはどこから来たんですか？</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">CPU には、「8バイトの値は、8で割り切れる番地から始まっていると速く読める」という性質がある（割り切れないと遅くなったり、CPU によっては読めなかったりする）。この、値の大きさに合わせた番地の区切りを<strong>アライメント</strong>（そろえ）と呼ぶ。id を番地 0 から置くと、id は 0〜3 番地を使う。次の score はどこから置けばいい？</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbitThink.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble"> 4番地から置くと、8で割り切れない。8で割り切れる次の番地は8番地だから、score は 8〜15 番地に置く。4〜7 番地は空いたまま……合計16バイト。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">そう。その空いた4バイトを<strong>パディング</strong>（詰め物）と呼ぶ。コンパイラが自動で入れるんだ。だから、構造体の大きさは、メンバの大きさの単純な合計とは限らない。メンバの並べ方で大きさが変わることもある。必ず sizeof で調べよう。</div>
+        </div>
+      </div>
+      <div class="formula-box">
+        <span class="step">id：0〜3 番地　／　すき間（パディング）：4〜7 番地　／　score：8〜15 番地　→ sizeof(Player) ＝ 16</span>
+      </div>
+      <div class="dialogue-scene">
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">構造体のメンバには、<code>pl.id</code> のように点（.）で触れる。では、構造体を指すポインタ p があるとき、そのメンバ id に触れるには？</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">p の指す先が構造体だから、*p で構造体そのもの。そのメンバなので (*p).id、でしょうか。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">正しい。かっこが要るのは、* より . のほうが先に計算される決まりだからだ。*p.id と書くと *(p.id) の意味になって、おかしなことになる。毎回 (*p).id と書くのは面倒なので、C言語には<strong>まったく同じ意味の省略形</strong> <code>p-&gt;id</code> が用意されている。矢印の形をしているから「アロー演算子」と呼ぶ。</div>
+        </div>
+      </div>
+      <div class="lab" id="st-s4"></div>
+      <script>
+      Stepper.mount(document.getElementById("st-s4"), {
+        id: "ptr-s4-struct", title: "構造体をヒープに借りる",
+        code: [
+          '#include <stdio.h>',
+          '#include <stdlib.h>',
+          '',
+          'typedef struct {',
+          '    int id;',
+          '    double score;',
+          '} Player;',
+          '',
+          'int main(void) {',
+          '    Player *pl = malloc(sizeof(Player));',
+          '    if (pl == NULL) return 1;',
+          '    pl->id = 1;',
+          '    pl->score = 98.5;',
+          '    printf("%d %.1f %zu\\n", pl->id, pl->score, sizeof(Player));',
+          '    free(pl);',
+          '    pl = NULL;',
+          '    return 0;',
+          '}'
+        ],
+        frames: ["main"],
+        steps: [
+          { line: 10, apply: function (m) { M.heap(m, "h", "Player（16バイト）", 16, { fields: [{ key: "id", name: "id（4）", value: "?" }, { key: "pad", name: "すき間（4）", value: "―" }, { key: "score", name: "score（8）", value: "?" }] }); M.svar(m, "main", "pl", "pl", "Player *", null, "h"); }, note: "Player 1つ分、16バイトをヒープに借りた。id と score のあいだに4バイトのすき間がある。" },
+          { line: 11, apply: M.nop, note: "借りられたかを確かめる（成功したので先へ）。" },
+          { line: 12, apply: function (m) { M.field(m, "h", "id", { value: 1 }); }, note: "<code>pl-&gt;id = 1;</code> ― <code>(*pl).id = 1;</code> とまったく同じ。pl の指す構造体の id に書いた。" },
+          { line: 13, apply: function (m) { M.field(m, "h", "score", { value: 98.5 }); }, note: "<code>pl-&gt;score = 98.5;</code>" },
+          { line: 14, apply: M.nop, note: "表示は <b>1 98.5 16</b>。%.1f は小数を1けたまで表示する書き方。" },
+          { line: 15, apply: function (m) { M.free(m, "h"); }, note: "構造体の16バイトを返した。pl は返した場所を指したまま。" },
+          { line: 16, apply: function (m) { M.set(m, "main", "pl", { pointsTo: "NULL" }); }, note: "pl を NULL にした。" },
+          { line: 17, apply: function (m) { M.pop(m, "main"); }, note: "main が終わった。" }
+        ]
+      });
+      </script>
+      <div class="dialogue-scene">
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">構造体のメンバにポインタを入れることもできますか？</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">できる。それが STAGE6 の連結リストの材料になる。構造体の中に「次の構造体の番地」を入れておけば、構造体どうしを鎖のようにつなげられるんだ。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">構造体を関数に渡すときも、コピーされるんですか？</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">そう。<code>void show(Player p)</code> と書くと、16バイトが丸ごとコピーされる。大きな構造体だとコピーに時間がかかるし、関数の中で書き換えても呼んだ側には届かない。だから、構造体はふつう <code>void show(const Player *p)</code> のように番地で渡す。const は「この番地の先を書き換えない」という約束で、うっかり書き換えるとコンパイラが教えてくれる。</div>
+        </div>
+      </div>
+
+      <h2 class="quiz-head">確認クイズ</h2>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q1. <code>p-&gt;score</code> とまったく同じ意味の書き方は？</p>
+        <div class="choice-list">
+          <button class="choice-btn">(*p).score</button>
+          <button class="choice-btn">*p.score</button>
+          <button class="choice-btn">&amp;p.score</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ -> は「ポインタの指す構造体のメンバ」の省略形。*p.score は *(p.score) と読まれてしまうので、かっこが必要。</div>
+      </div>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q2. int（4バイト）と double（8バイト）を1つずつ持つ構造体が、多くの環境で16バイトになる理由は？</p>
+        <div class="choice-list">
+          <button class="choice-btn">double を2つ分の場所に置く決まりがあるから</button>
+          <button class="choice-btn">構造体には必ず4バイトの名前の欄が付くから</button>
+          <button class="choice-btn">double を8で割り切れる番地から置くため、間に4バイトのすき間（パディング）が入るから</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ 値の大きさに合わせて番地をそろえる（アライメント）ために、コンパイラがすき間を入れる。大きさは sizeof で調べる。</div>
+      </div>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q3. 大きな構造体を関数に渡すとき、ふつう番地（const 付きのポインタ）で渡す理由は？</p>
+        <div class="choice-list">
+          <button class="choice-btn">番地で渡さないと、コンパイルできないから</button>
+          <button class="choice-btn">値で渡すと構造体が丸ごとコピーされ、時間がかかるから（const で書き換えない約束も付けられる）</button>
+          <button class="choice-btn">番地で渡すと、構造体がヒープに移されるから</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ 引数は値のコピー。大きな構造体はコピーが重いので、番地を渡す。const で「書き換えない」ことも示せる。</div>
+      </div>
+
+      <div class="stage-nav">
+        <a class="btn" href="stage3.html">← 前のステージ</a>
+        <button class="btn btn-primary" id="btn-next" disabled>次へ →</button>
+      </div>
+
+      <div id="book-recommend"></div>
+    </main>
+  </div>
+</div>
+
+<script>QUEST.initStagePage(4);</script>
+
+<script src="https://my.habatakijuku.com/sync.js" defer></script>
+</body>
+</html>

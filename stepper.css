@@ -1,0 +1,75 @@
+/* Cコードのステップ実行（旧 index.html から移植） */
+:root{--stack:#3f6fb0;--stack-dark:#2b4d80;--heap:#2fa88f;--heap-dark:#1d7a67;--ptr:#d98e3f;--ptr-dark:#a8661f;--m:ui-monospace,SFMono-Regular,Consolas,monospace}
+.stepper{display:flex;flex-direction:column;gap:12px;min-width:0}
+.stepper > *{min-width:0}
+.panel-head{font-size:12px;font-weight:900;color:var(--muted);margin-bottom:6px}
+.code-panel{background:#0e1613;border-radius:10px;padding:12px 4px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06)}
+.code-panel .panel-head{color:#9fd6c6;padding:0 12px;margin-bottom:8px}
+.code-block{font-family:var(--m);font-size:12.5px;line-height:1.85;overflow-x:auto}
+.code-line{display:flex;gap:10px;padding:1px 12px;white-space:pre;color:#cfe9de;border-left:3px solid transparent}
+.code-line.active{background:rgba(217,142,63,.18);border-left-color:var(--ptr);color:#fff}
+.ln-no{color:#5c8a7c;min-width:22px;text-align:right;user-select:none;flex-shrink:0}
+.ln-text{white-space:pre}
+.tk-kw{color:#e8a53f;font-weight:800}
+.tk-fn{color:#7fd6c4}
+.tk-str{color:#f0c987}
+.tk-num{color:#9fd6c6}
+.tk-cm{color:#5c8a7c;font-style:italic}
+
+.mem-panel-wrap{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px;background:#fbf7ea;border:1px solid var(--line);border-radius:10px;padding:12px}
+@media(max-width:640px){.mem-panel-wrap{grid-template-columns:minmax(0,1fr)}}
+.mem-col-head{font-size:12px;font-weight:900;color:var(--muted);margin-bottom:8px}
+.mem-col-body{display:flex;flex-direction:column;gap:10px;min-height:40px;min-width:0}
+.arrow-svg{position:absolute;inset:0;pointer-events:none;overflow:visible}
+.arrow-path{fill:none;stroke:var(--ptr);stroke-width:2}
+.arrow-path.dangling{stroke:var(--ng);stroke-dasharray:4 3}
+
+.frame-box{border:1.5px solid var(--stack);border-radius:8px;overflow:hidden;background:#fff}
+.frame-head{background:linear-gradient(#5f8bcc,var(--stack-dark));color:#fff;font-size:11.5px;font-weight:900;padding:5px 10px}
+.frame-vars{display:flex;flex-direction:column;gap:6px;padding:8px}
+.frame-empty{font-size:11.5px;color:var(--muted);padding:2px 2px}
+
+.mem-box{border:1.5px solid var(--stack);border-radius:7px;background:#fff;font-size:12px}
+.mem-box.heap-box{border-color:var(--heap)}
+.mem-box.heap-box.is-freed{opacity:.55;border-style:dashed;filter:grayscale(.25)}
+.mem-box-row{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:5px 8px;background:rgba(63,111,176,.08)}
+.heap-box .mem-box-row{background:rgba(47,168,143,.1)}
+.mem-box-name{font-family:var(--m);font-size:11.5px}
+.mem-box-label{font-family:var(--m);font-size:11.5px;font-weight:800}
+.mem-addr{font-family:var(--m);font-size:10px;color:var(--muted)}
+.mem-box-body{padding:6px 8px}
+.mem-box-fields{padding:2px 0}
+.mem-field-row{display:flex;justify-content:space-between;gap:8px;padding:3px 8px;font-family:var(--m);font-size:11.5px;border-top:1px dashed var(--line)}
+.mem-field-row:first-child{border-top:none}
+.mem-box-badge{font-size:10.5px;font-weight:900;color:var(--ng);padding:3px 8px;background:var(--ng-bg);text-align:center}
+
+.tag-null{display:inline-block;font-family:var(--m);font-size:10.5px;font-weight:800;color:#7a7050;background:#eee6cf;border-radius:5px;padding:1px 6px}
+.tag-wild{display:inline-block;font-family:var(--m);font-size:10.5px;font-weight:800;color:var(--ng);background:var(--ng-bg);border-radius:5px;padding:1px 6px}
+.tag-addr{display:inline-block;font-family:var(--m);font-size:10.5px;font-weight:800;color:var(--ptr-dark);background:#fdeed4;border-radius:5px;padding:1px 6px}
+
+.step-note{font-size:13px;line-height:1.7;color:#241d12;background:#fff;border:1px solid var(--line);border-radius:8px;padding:10px 12px}
+.step-controls{display:flex;align-items:center;justify-content:center;gap:14px}
+.step-progress{font-family:var(--m);font-size:12px;color:var(--muted);min-width:56px;text-align:center}
+
+/* Code quiz cards (bug dojo / final challenge) */
+.codequiz-card{background:#fff;border:1px solid var(--line);border-radius:10px;padding:12px 14px;margin-bottom:14px}
+.codequiz-code{font-family:var(--m);font-size:12px;line-height:1.75;background:#0e1613;color:#cfe9de;border-radius:8px;padding:10px 12px;margin-bottom:10px;overflow-x:auto;white-space:pre}
+.codequiz-code .code-line{padding:0;border-left:none}
+/* 実験ウィジェット共通 */
+.lab{background:var(--paper2);border:1.5px solid #9fcfc8;border-radius:12px;padding:12px 14px;margin:16px 0}
+.lab.solved{border-color:var(--ok-bd)}
+.lab-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:6px}
+.lab-badge{background:#b06d22;color:#fff;border-radius:6px;padding:2px 9px;font-size:11.5px;font-weight:950}
+.lab.solved .lab-badge{background:var(--ok)}
+.lab-title{font-size:15px;font-weight:950;color:#1c2f2b}
+.lab p{font-size:13.5px;margin:4px 0}
+.lab .row{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;margin:8px 0}
+.lab .readout{font-size:14px;font-weight:900;text-align:center;font-variant-numeric:tabular-nums}
+.lab svg{display:block;margin:0 auto;max-width:100%;height:auto}
+.lab-status{font-size:13px;font-weight:900;color:var(--muted);text-align:center}
+.lab-status.ok{color:var(--ok)}
+.stepper .btn{padding:.5rem 1rem}
+.lab-note{font-size:12.5px;color:var(--muted);margin:14px 0 -8px}
+.dialog-bubble code,.formula-box code,.quiz-q code,.lab code,.step-note code{font-family:var(--m);background:#f4ead6;border-radius:4px;padding:0 4px;font-size:.92em}
+pre.qcode{background:#0e1613;color:#cfe9de;border-radius:8px;padding:8px 12px;font-family:var(--m);font-size:12.5px;line-height:1.7;overflow-x:auto;margin:8px 0;white-space:pre}
+.formula-box pre{font-family:var(--m);font-size:12.5px;white-space:pre;overflow-x:auto;margin:0}

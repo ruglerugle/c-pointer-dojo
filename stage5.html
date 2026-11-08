@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#123334">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-9RTQCP2HXM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-9RTQCP2HXM');
+</script>
+<title>STAGE5 ポインタのポインタ ― C言語ポインタ道場</title>
+<meta name="description" content="関数の中で malloc して、呼び出し元のポインタに番地を渡したい。int * を受け取る書き方ではなぜうまくいかないのかを先に確かめ、ポインタのポインタ（int **）で呼び出し元のポインタそのものを書き換える方法を、2つのコードで比べる。">
+<link rel="canonical" href="https://informatics.habatakijuku.com/c-pointer-dojo/stage5">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="C言語ポインタ道場">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="STAGE5 ポインタのポインタ ― C言語ポインタ道場">
+<meta property="og:description" content="ポインタのポインタ。関数の中から、呼び出し元のポインタを書き換える。">
+<meta property="og:url" content="https://informatics.habatakijuku.com/c-pointer-dojo/stage5">
+<meta property="og:image" content="https://informatics.habatakijuku.com/images/ogp/c-pointer-dojo.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥋</text></svg>">
+<link rel="stylesheet" href="design-system.css?v=20261108a">
+<link rel="stylesheet" href="stepper.css?v=20261108a">
+<script src="js/stages.js?v=20261108a"></script>
+<script src="js/progress.js?v=20261108a"></script>
+<script src="js/stepper.js?v=20261108a"></script>
+</head>
+<body>
+<div class="app-shell side-collapsed" id="app-shell">
+  <header class="game-header">
+    <div class="brand">
+      <div class="brand-title"><a class="head-reset home-badge" href="./" title="トップへ" aria-label="トップへ">🥋</a> <span>C言語ポインタ道場</span></div>
+      <div class="brand-sub">STAGE 5 ― ポインタのポインタ ―</div>
+    </div>
+    <div class="head-progress-wrap">
+      <div class="head-progress-label" id="progress-label">クリア 0 / 8</div>
+      <div class="head-progress" role="progressbar" aria-label="クリア済みステージ数" aria-valuemin="0" aria-valuemax="8" aria-valuenow="0"><div class="head-progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div class="header-actions">
+      <a class="head-reset" href="/" title="情報の冒険（シリーズの地図）へ">🧭 地図</a>
+      <button class="head-reset" id="btn-reset-all">🔄 最初から</button>
+      <button class="head-reset" id="head-nav-toggle" title="ステージ一覧の表示切替">☰ ナビ</button>
+    </div>
+  </header>
+
+  <div class="game-layout">
+    <div class="side-backdrop" id="side-backdrop"></div>
+    <aside class="side-panel">
+      <div class="side-head">
+        <button class="side-toggle" id="sidebar-toggle" title="ステージ一覧の表示切替" aria-label="ステージ一覧の表示切替">☰</button>
+        <span class="side-head-text">📚 ステージ一覧</span>
+      </div>
+      <div class="side-list" id="side-list"></div>
+    </aside>
+
+    <main class="main-area">
+      <div class="chapter-head">
+        <span class="chapter-badge">STAGE 5</span><h1 class="chapter-title">ポインタのポインタ</h1>
+        <div class="chapter-sub">関数から呼び出し元を書き換える</div>
+      </div>
+
+      <div class="mission-box">
+        <div class="mission-label">🎯 ミッション</div>
+        <div class="mission-text">C言語の引数が「値のコピー」であることと、ポインタのポインタが必要になる理由を説明できるようになろう。2つのコードを最後の行まで実行し、確認クイズに全問正解すれば合格。</div>
+        <span class="mission-status" id="mission-status">未達成</span>
+      </div>
+
+      <div class="dialogue-scene">
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">今日の問題はこうだ。「int を1つヒープに借りて、42 を入れて、その番地を呼び出し元に渡す関数 allocate を作りたい」。main では <code>int *p = NULL;</code> を用意しておいて、allocate を呼んだら p がその場所を指すようにしたい。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">ポインタを渡せば、関数の中から書き換えられるんでしたよね（『メモリのしくみクエスト』）。だから <code>void allocate(int *out)</code> にして、中で <code>out = malloc(…)</code>。呼ぶときは <code>allocate(p)</code>。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">まず、その書き方で動かしてみよう。</div>
+        </div>
+      </div>
+      <div class="lab" id="st-s5a"></div>
+      <script>
+      Stepper.mount(document.getElementById("st-s5a"), {
+        id: "ptr-s5-bad", title: "うまくいかない版（int * で受け取る）",
+        code: [
+          '#include <stdlib.h>',
+          '',
+          'void allocate(int *out) {',
+          '    out = malloc(sizeof(int));',
+          '    *out = 42;',
+          '}',
+          '',
+          'int main(void) {',
+          '    int *p = NULL;',
+          '    allocate(p);',
+          '    // ここで p は？',
+          '    return 0;',
+          '}'
+        ],
+        frames: ["main"],
+        steps: [
+          { line: 9, apply: function (m) { M.svar(m, "main", "p", "p", "int *", null, "NULL"); }, note: "main の p は NULL。" },
+          { line: 10, apply: function (m) { M.push(m, "allocate"); M.svar(m, "allocate", "out", "out", "int *", null, "NULL"); }, note: "allocate(p) を呼ぶと、allocate の板に out が作られ、p の値（NULL）が<b>コピー</b>される。out と p は別々の箱。" },
+          { line: 4, apply: function (m) { M.heap(m, "h", "malloc(int)", 4, { value: "?" }); M.set(m, "allocate", "out", { pointsTo: "h" }); }, note: "<code>out = malloc(...)</code> ― 書き換わったのは allocate の中の out だけ。main の p は NULL のまま。" },
+          { line: 5, apply: function (m) { M.hval(m, "h", 42); }, note: "<code>*out = 42;</code> ― ヒープに 42 が入った。" },
+          { line: 6, apply: function (m) { M.pop(m, "allocate"); }, note: "allocate が終わり、out は板ごと消えた。借りた4バイトの番地を覚えているものは、もうどこにも無い（メモリリーク）。" },
+          { line: 11, apply: M.nop, note: "main の p は <b>NULL のまま</b>。ここで *p を使えば、NULL の先を読む未定義動作になる。" },
+          { line: 13, apply: function (m) { M.pop(m, "main"); }, note: "ヒープの4バイトは返されないまま残った。" }
+        ]
+      });
+      </script>
+      <div class="dialogue-scene">
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">p は NULL のまま……。out は p の<strong>コピー</strong>だから、out を書き換えても p は変わらないんですね。しかも借りた場所の番地を誰も覚えていないので、リークまで起きている。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">そう。C言語の引数は、いつでも値のコピーだ。前のクエストで「番地を渡せば、呼び出し元の変数を書き換えられる」と言ったのは、<strong>書き換えたい変数そのものの番地</strong>を渡すという意味だった。いま書き換えたい変数は何かな？</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbitThink.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble"> main の p です。p は int * 型の変数だから、p の番地 &amp;p を渡せばいい。……p の番地を入れる変数の型は、「int * を指すポインタ」になりますね。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">それを <code>int **</code>（int を指すポインタを指すポインタ）と書く。関数の中では、<code>*out</code> が「out の指す箱」、つまり main の p そのものになる。</div>
+        </div>
+      </div>
+      <div class="formula-box">
+        <span class="step"><code>void allocate(int **out)</code>　／　呼ぶとき：<code>allocate(&amp;p);</code></span>
+        <span class="step"><code>out</code>：p の番地　→　<code>*out</code>：p そのもの　→　<code>**out</code>：p の指す int</span>
+      </div>
+      <div class="lab" id="st-s5b"></div>
+      <script>
+      Stepper.mount(document.getElementById("st-s5b"), {
+        id: "ptr-s5-good", title: "うまくいく版（int ** で受け取る）",
+        code: [
+          '#include <stdio.h>',
+          '#include <stdlib.h>',
+          '',
+          'void allocate(int **out) {',
+          '    *out = malloc(sizeof(int));',
+          '    if (*out == NULL) return;',
+          '    **out = 42;',
+          '}',
+          '',
+          'int main(void) {',
+          '    int *p = NULL;',
+          '    allocate(&p);',
+          '    if (p != NULL) printf("%d\\n", *p);',
+          '    free(p);',
+          '    p = NULL;',
+          '    return 0;',
+          '}'
+        ],
+        frames: ["main"],
+        steps: [
+          { line: 11, apply: function (m) { M.svar(m, "main", "p", "p", "int *", null, "NULL"); }, note: "main の p は NULL。" },
+          { line: 12, apply: function (m) { M.push(m, "allocate"); M.svar(m, "allocate", "out", "out", "int **", null, "p"); }, note: "<code>allocate(&amp;p)</code> ― p の<b>番地</b>がコピーされて out に入った。out は main の p を指している。" },
+          { line: 5, apply: function (m) { M.heap(m, "h", "malloc(int)", 4, { value: "?" }); M.set(m, "main", "p", { pointsTo: "h" }); }, note: "<code>*out = malloc(...)</code> ― *out は main の p そのもの。だから p がヒープを指すように書き換わった。" },
+          { line: 6, apply: M.nop, note: "借りられたか確かめる。" },
+          { line: 7, apply: function (m) { M.hval(m, "h", 42); }, note: "<code>**out = 42;</code> ― out の指す p の指す int に 42。2段たどっている。" },
+          { line: 8, apply: function (m) { M.pop(m, "allocate"); }, note: "allocate が終わり out は消えたが、p はもう書き換わっているので番地は失われない。" },
+          { line: 13, apply: M.nop, note: "表示は <b>42</b>。" },
+          { line: 14, apply: function (m) { M.free(m, "h"); }, note: "返した。" },
+          { line: 15, apply: function (m) { M.set(m, "main", "p", { pointsTo: "NULL" }); }, note: "p を NULL に。" },
+          { line: 16, apply: function (m) { M.pop(m, "main"); }, note: "main が終わった。取り残しは無い。" }
+        ]
+      });
+      </script>
+      <div class="dialogue-scene">
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">「書き換えたいものの番地を渡す」という1つの規則を、ポインタにもそのまま当てはめただけなんですね。int を書き換えたいなら int *、int * を書き換えたいなら int **。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">そういうこと。* が2つ並ぶと怖く見えるけれど、規則は同じだ。別の方法として、関数の答え（return）で番地を返す <code>int *allocate(void)</code> という書き方もよく使われる。どちらも、番地を<strong>呼び出し元に確実に届ける</strong>ための方法だ。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">int ** は、ほかにも出てくる。たとえば、行ごとに長さの違う表を作るときは、「行の先頭の番地」を並べた配列を借りて、それぞれの行を別に借りる。<code>int **grid</code> の grid[i] が i 行目の番地、grid[i][j] がその中の値になる。</div>
+        </div>
+      </div>
+
+      <h2 class="quiz-head">確認クイズ</h2>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q1. STAGE5 の「うまくいかない版」で、main の p が NULL のままだった理由は？</p>
+        <div class="choice-list">
+          <button class="choice-btn">malloc が失敗したから</button>
+          <button class="choice-btn">allocate の中で free したから</button>
+          <button class="choice-btn">関数が受け取ったのは p の値のコピーで、そのコピー（out）を書き換えても p は変わらないから</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ 引数はコピー。p 自身を書き換えたいなら、p の番地（&p、型は int **）を渡す。</div>
+      </div>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q2. <code>void allocate(int **out)</code> を <code>allocate(&amp;p)</code> で呼んだとき、関数の中の <code>*out</code> は何を表す？</p>
+        <div class="choice-list">
+          <button class="choice-btn">ヒープに借りた int の値</button>
+          <button class="choice-btn">main の変数 p そのもの</button>
+          <button class="choice-btn">out 自身の番地</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ out には p の番地が入っている。*out は「out の指す箱」＝ p。**out はさらにその先の int。</div>
+      </div>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q3. うまくいかない版では、メモリリークも起きていた。その理由は？</p>
+        <div class="choice-list">
+          <button class="choice-btn">借りた場所の番地を覚えていた out が関数の終わりに消え、だれも番地を覚えていなくなったから</button>
+          <button class="choice-btn">free を2回呼んだから</button>
+          <button class="choice-btn">p が NULL だったから</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ 番地を覚えているものがなくなると、返すことができない。これがリーク。</div>
+      </div>
+
+      <div class="stage-nav">
+        <a class="btn" href="stage4.html">← 前のステージ</a>
+        <button class="btn btn-primary" id="btn-next" disabled>次へ →</button>
+      </div>
+
+      <div id="book-recommend"></div>
+    </main>
+  </div>
+</div>
+
+<script>QUEST.initStagePage(5);</script>
+
+<script src="https://my.habatakijuku.com/sync.js" defer></script>
+</body>
+</html>

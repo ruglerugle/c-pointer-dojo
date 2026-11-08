@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#123334">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-9RTQCP2HXM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-9RTQCP2HXM');
+</script>
+<title>STAGE2 配列とポインタ演算 ― C言語ポインタ道場</title>
+<meta name="description" content="配列の名前は、式の中ではたいてい先頭要素の番地に変わる。ポインタに1を足すと型1個分進むこと、arr[i] と *(arr + i) が同じ意味であること、sizeof では配列とポインタで結果が違うことを、コードを1行ずつ実行して確かめる。">
+<link rel="canonical" href="https://informatics.habatakijuku.com/c-pointer-dojo/stage2">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="C言語ポインタ道場">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="STAGE2 配列とポインタ演算 ― C言語ポインタ道場">
+<meta property="og:description" content="arr[i] と *(arr + i) は同じ。配列とポインタ演算をコードで追う。">
+<meta property="og:url" content="https://informatics.habatakijuku.com/c-pointer-dojo/stage2">
+<meta property="og:image" content="https://informatics.habatakijuku.com/images/ogp/c-pointer-dojo.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥋</text></svg>">
+<link rel="stylesheet" href="design-system.css?v=20261108a">
+<link rel="stylesheet" href="stepper.css?v=20261108a">
+<script src="js/stages.js?v=20261108a"></script>
+<script src="js/progress.js?v=20261108a"></script>
+<script src="js/stepper.js?v=20261108a"></script>
+</head>
+<body>
+<div class="app-shell side-collapsed" id="app-shell">
+  <header class="game-header">
+    <div class="brand">
+      <div class="brand-title"><a class="head-reset home-badge" href="./" title="トップへ" aria-label="トップへ">🥋</a> <span>C言語ポインタ道場</span></div>
+      <div class="brand-sub">STAGE 2 ― 配列とポインタ演算 ―</div>
+    </div>
+    <div class="head-progress-wrap">
+      <div class="head-progress-label" id="progress-label">クリア 0 / 8</div>
+      <div class="head-progress" role="progressbar" aria-label="クリア済みステージ数" aria-valuemin="0" aria-valuemax="8" aria-valuenow="0"><div class="head-progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div class="header-actions">
+      <a class="head-reset" href="/" title="情報の冒険（シリーズの地図）へ">🧭 地図</a>
+      <button class="head-reset" id="btn-reset-all">🔄 最初から</button>
+      <button class="head-reset" id="head-nav-toggle" title="ステージ一覧の表示切替">☰ ナビ</button>
+    </div>
+  </header>
+
+  <div class="game-layout">
+    <div class="side-backdrop" id="side-backdrop"></div>
+    <aside class="side-panel">
+      <div class="side-head">
+        <button class="side-toggle" id="sidebar-toggle" title="ステージ一覧の表示切替" aria-label="ステージ一覧の表示切替">☰</button>
+        <span class="side-head-text">📚 ステージ一覧</span>
+      </div>
+      <div class="side-list" id="side-list"></div>
+    </aside>
+
+    <main class="main-area">
+      <div class="chapter-head">
+        <span class="chapter-badge">STAGE 2</span><h1 class="chapter-title">配列とポインタ演算</h1>
+        <div class="chapter-sub">arr[i] と *(arr + i)</div>
+      </div>
+
+      <div class="mission-box">
+        <div class="mission-label">🎯 ミッション</div>
+        <div class="mission-text">配列とポインタの関係（先頭番地への変換・ポインタ演算・添え字）を説明できるようになろう。コードを最後の行まで実行し、確認クイズに全問正解すれば合格。</div>
+        <span class="mission-status" id="mission-status">未達成</span>
+      </div>
+
+      <div class="dialogue-scene">
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">配列は、同じ型の箱を番地の連続した場所に並べたものだったね。<code>int arr[4] = {10, 20, 30, 40};</code> と書くと、4バイトの int が4つ、隙間なく並ぶ。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">先頭の arr[0] の番地が分かれば、arr[1] は4バイト先、arr[2] は8バイト先ですね。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">そう。そして C言語には、配列について大事な約束がある。<strong>配列の名前を式の中で使うと、たいていの場合「先頭要素の番地」に変わる</strong>。だから <code>int *p = arr;</code> と書くと、p には arr[0] の番地が入る。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">「たいていの場合」というのは、変わらない場合もあるんですか？</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">2つある。<code>sizeof arr</code> と書いたときと、<code>&amp;arr</code> と書いたときだ。sizeof arr は配列全体の大きさ（int 4つで16バイト）になる。もし番地に変わってしまっていたら、ポインタの大きさの8になるはずだね。&amp;arr は「配列全体の番地」で、値は arr[0] の番地と同じだけれど、「16バイトのかたまりを指す」という意味になる。</div>
+        </div>
+      </div>
+      <div class="formula-box">
+        <span class="step"><code>arr</code>（式の中）→ &amp;arr[0]、つまり先頭要素の番地に変わる</span>
+        <span class="step">例外1：<code>sizeof arr</code> は配列全体の大きさ（4×4＝16バイト）</span>
+        <span class="step">例外2：<code>&amp;arr</code> は配列全体を指す番地（値は先頭と同じ、意味が違う）</span>
+      </div>
+      <div class="dialogue-scene">
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">ポインタの足し算は、<strong>指している型1個分</strong>ずつ進むんだったね。int を指す p なら、p + 1 は番地として4バイト先。そして <code>arr[i]</code> という書き方は、C言語の決まりでは <code>*(arr + i)</code> とまったく同じ意味だと定められている。</div>
+        </div>
+      </div>
+      <div class="lab" id="st-s2"></div>
+      <script>
+      Stepper.mount(document.getElementById("st-s2"), {
+        id: "ptr-s2-arith", title: "配列とポインタ演算",
+        code: [
+          '#include <stdio.h>',
+          '',
+          'int main(void) {',
+          '    int arr[4] = {10, 20, 30, 40};',
+          '    int *p = arr;',
+          '    printf("%d\\n", *p);',
+          '    p = p + 1;',
+          '    printf("%d\\n", *p);',
+          '    printf("%d %d\\n", arr[2], *(arr + 2));',
+          '    printf("%zu %zu\\n", sizeof arr, sizeof p);',
+          '    return 0;',
+          '}'
+        ],
+        frames: ["main"],
+        steps: [
+          { line: 4, apply: function (m) { M.sarray(m, "main", "arr", "arr", "int", [10, 20, 30, 40]); }, note: "arr の4つの int が、番地の連続した場所に並んだ。番地が4ずつ増えていることを確かめよう。" },
+          { line: 5, apply: function (m) { M.svar(m, "main", "p", "p", "int *", null, "arr0"); }, note: "<code>int *p = arr;</code> ― 式の中の arr は先頭要素の番地に変わるので、p は arr[0] を指す。" },
+          { line: 6, apply: M.nop, note: "<code>*p</code> は p の指す箱、arr[0]。表示は <b>10</b>。" },
+          { line: 7, apply: function (m) { M.set(m, "main", "p", { pointsTo: "arr1" }); }, note: "<code>p = p + 1;</code> ― 番地は1ではなく、int 1個分の4だけ進む。p は arr[1] を指すようになった。" },
+          { line: 8, apply: M.nop, note: "表示は <b>20</b>。" },
+          { line: 9, apply: M.nop, note: "arr[2] と *(arr + 2) は同じ意味なので、表示は <b>30 30</b>。" },
+          { line: 10, apply: M.nop, note: "sizeof arr は配列全体で <b>16</b>、sizeof p はポインタの大きさで <b>8</b>。%zu は sizeof の結果（size_t 型）を表示する書き方。" },
+          { line: 12, apply: function (m) { M.pop(m, "main"); }, note: "main が終わり、配列もポインタも板ごと片付いた。" }
+        ]
+      });
+      </script>
+      <div class="dialogue-scene">
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">arr[2] が *(arr + 2) と同じ意味なら、2[arr] と書いても *(2 + arr) で同じになりませんか？ 足し算は順番を入れ替えても同じだから。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">実際に、C言語ではそれも正しく動く。決まりをそのまま当てはめた結果なんだ。もちろん読みにくいので、本当に書く人はいないけれどね。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">配列の外、たとえば arr[4] や arr[10] と書いたらどうなるんですか？</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">計算としては *(arr + 4) だから、arr[3] のすぐ後ろの番地を読み書きしてしまう。C言語は、添え字が範囲の中かどうかを<strong>確かめない</strong>。そこに別の変数があれば、それを壊す。これは STAGE7 のバグ道場で詳しく扱う。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">最後に、関数に配列を渡すときの注意だ。<code>void f(int a[])</code> と書いても、関数が受け取るのは<strong>先頭の番地だけ</strong>で、中身はポインタ <code>int *a</code> と同じになる。だから、関数の中で sizeof a としても配列の大きさは分からない。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">番地だけ渡されても、何個並んでいるかは分からない……。だから、配列を渡す関数には、要素の数も一緒に渡すんですね。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">そう。<code>void f(int *a, size_t n)</code> のように、個数を別の引数で渡すのが C言語の決まった書き方だ（size_t は大きさや個数を表すための、マイナスにならない整数の型）。</div>
+        </div>
+      </div>
+
+      <h2 class="quiz-head">確認クイズ</h2>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q1. int を指すポインタ p に 1 を足すと、番地はいくつ進む（int が4バイトの環境）？</p>
+        <div class="choice-list">
+          <button class="choice-btn">1</button>
+          <button class="choice-btn">8</button>
+          <button class="choice-btn">4</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ ポインタ演算は「指す型1個分」単位。int なら4バイト進み、次の要素を指す。</div>
+      </div>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q2. <code>int arr[4];</code> のとき、<code>sizeof arr</code> の値は（int 4バイト、ポインタ8バイトの環境）？</p>
+        <div class="choice-list">
+          <button class="choice-btn">8（先頭の番地に変わるので、ポインタの大きさ）</button>
+          <button class="choice-btn">16（配列全体の大きさ）</button>
+          <button class="choice-btn">4（int 1個の大きさ）</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ sizeof の中では、配列の名前は番地に変わらない。int 4つ分の16。</div>
+      </div>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q3. 関数 <code>void f(int a[])</code> の中で a について正しいのは？</p>
+        <div class="choice-list">
+          <button class="choice-btn">受け取るのは先頭の番地だけで、a は int * と同じ。要素の数は分からない</button>
+          <button class="choice-btn">配列の中身がまるごとコピーされて渡される</button>
+          <button class="choice-btn">sizeof a で、渡された配列全体の大きさが分かる</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ 配列を関数に渡すと、先頭の番地に変わる。要素の数は別の引数で渡す。</div>
+      </div>
+
+      <div class="stage-nav">
+        <a class="btn" href="stage1.html">← 前のステージ</a>
+        <button class="btn btn-primary" id="btn-next" disabled>次へ →</button>
+      </div>
+
+      <div id="book-recommend"></div>
+    </main>
+  </div>
+</div>
+
+<script>QUEST.initStagePage(2);</script>
+
+<script src="https://my.habatakijuku.com/sync.js" defer></script>
+</body>
+</html>

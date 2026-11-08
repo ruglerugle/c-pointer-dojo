@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#123334">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-9RTQCP2HXM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-9RTQCP2HXM');
+</script>
+<title>全ステージクリア ― C言語ポインタ道場</title>
+<meta name="description" content="C言語のポインタを、コードを1行ずつ実行しながら、スタックとヒープの図で追いかける。変数と番地・配列とポインタ演算・malloc と free・構造体とパディング・ポインタのポインタ・連結リスト・典型的な6つのバグまで。最後は連結リストから1つ消す関数を完成させる、全8ステージの無料学習サイト。ねこ博士とうさ美が案内します。">
+<link rel="canonical" href="https://informatics.habatakijuku.com/c-pointer-dojo/complete">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="C言語ポインタ道場">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="全ステージクリア ― C言語ポインタ道場">
+<meta property="og:description" content="C言語のポインタを、コードを1行ずつ実行して追う。&amp; と * から連結リストの削除まで、全8ステージ。">
+<meta property="og:url" content="https://informatics.habatakijuku.com/c-pointer-dojo/complete">
+<meta property="og:image" content="https://informatics.habatakijuku.com/images/ogp/c-pointer-dojo.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥋</text></svg>">
+<link rel="stylesheet" href="design-system.css?v=20261108a">
+<meta name="robots" content="noindex">
+</head>
+<body>
+<div class="shell">
+  <nav class="topbar" aria-label="サイト情報">
+    <span class="brand-badge" aria-hidden="true">🥋</span>
+    <span class="brand-copy">
+      <strong>C言語ポインタ道場</strong>
+      <small>C POINTER DOJO</small>
+    </span>
+    <a class="head-reset" style="margin-left:auto" href="/" title="情報の冒険（シリーズの地図）へ">🧭 シリーズの地図</a>
+  </nav>
+
+  <header class="hero">
+    <div class="hero-copy">
+      <h1><span class="line">ポインタの稽古、皆伝 ∎</span></h1>
+      <p>& で番地を取り、* で番地の先へ。配列の名前は先頭の番地に変わり、malloc で借りたら確かめて返し、構造体には -> で触れ、書き換えたいものの番地を渡す。そして、返したもの・範囲の外・でたらめな番地を使う間違いを見抜く目。最後は deleteNode を自分で完成させた。旅の記録で振り返ろう。</p>
+    </div>
+  </header>
+
+  <main>
+    <section class="board" aria-labelledby="recap-heading">
+      <div class="board-head">
+        <div><h2 id="recap-heading">ここまでの旅を振り返ろう</h2></div>
+        <p>全8ステージ、おつかれさま</p>
+      </div>
+      <div class="recap-list">
+        <div class="recap-item">
+          <div class="recap-num">1</div>
+          <div class="recap-body">
+            <div class="recap-title">変数と番地</div>
+            <div class="recap-desc">&a で a の番地、*p で p の指す箱。ポインタも8バイトの変数。int の大きさは環境で決まるので sizeof で調べる。初期化していないポインタはワイルドポインタ、まだ指す先が無ければ NULL。</div>
+          </div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">2</div>
+          <div class="recap-body">
+            <div class="recap-title">配列とポインタ演算</div>
+            <div class="recap-desc">配列の名前は先頭の番地に変わる（sizeof と & は例外）。ポインタ演算は型1個分ずつ。arr[i] ＝ *(arr＋i)。関数に渡すと番地だけになるので、個数は別に渡す。範囲は確かめてくれない。</div>
+          </div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">3</div>
+          <div class="recap-body">
+            <div class="recap-title">malloc と free</div>
+            <div class="recap-desc">malloc の答えは void * なのでキャストは不要。失敗すると NULL。free は p を書き換えないので、返したら p = NULL。未定義動作は「何が起きるか約束されない」こと。</div>
+          </div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">4</div>
+          <div class="recap-body">
+            <div class="recap-title">構造体とポインタ</div>
+            <div class="recap-desc">値の大きさに合わせて番地をそろえるため、メンバの間にすき間（パディング）が入りうる。p->m は (*p).m。大きな構造体は const 付きのポインタで渡す。</div>
+          </div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">5</div>
+          <div class="recap-body">
+            <div class="recap-title">ポインタのポインタ</div>
+            <div class="recap-desc">引数は値のコピー。int * を受け取っても呼び出し元のポインタは変わらない（しかもリーク）。書き換えたいものの番地を渡す規則をポインタに当てはめると int **。</div>
+          </div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">6</div>
+          <div class="recap-body">
+            <div class="recap-title">連結リスト</div>
+            <div class="recap-desc">ノードは value と next。つなぎ替えは next の書き換えだけで済むが、何番目かへ行くにはたどる必要がある。全部返すときは、free の前に次の番地を控える。</div>
+          </div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">7</div>
+          <div class="recap-body">
+            <div class="recap-title">バグ道場</div>
+            <div class="recap-desc">どれも未定義動作で、たまたま動くことがあるから怖い。警告をすべて出す、検査つきで動かす、そしてコードを読んで見抜く目を持つ。</div>
+          </div>
+        </div>
+        <div class="recap-item">
+          <div class="recap-num">8</div>
+          <div class="recap-body">
+            <div class="recap-title">総合稽古</div>
+            <div class="recap-desc">先頭なら *headRef ＝ cur->next、途中なら prev->next ＝ cur->next、最後に free(cur)。head の番地を受け取るので、関数の外の head を書き換えられる。</div>
+          </div>
+        </div>
+      </div>
+      <div class="complete-actions">
+        <a class="btn btn-primary" href="https://memory-safety.habatakijuku.com/">次の読み物：片付けを忘れたサーバー →</a>
+        <a class="btn" href="./">トップへ戻る</a>
+        <a class="btn" href="https://x.com/intent/post?text=C%E8%A8%80%E8%AA%9E%E3%83%9D%E3%82%A4%E3%83%B3%E3%82%BF%E9%81%93%E5%A0%B4%E3%82%92%E5%85%A88%E3%82%B9%E3%83%86%E3%83%BC%E3%82%B8%E3%82%AF%E3%83%AA%E3%82%A2%E3%81%97%E3%81%9F%EF%BC%81&url=https%3A%2F%2Finformatics.habatakijuku.com%2Fc-pointer-dojo%2F" target="_blank" rel="noopener">𝕏 でシェア</a>
+        <button class="btn" id="btn-reset-all">🔄 最初から</button>
+      </div>
+    </section>
+    <div id="book-recommend"></div>
+  </main>
+
+  <footer>
+    <p>NO DOWNLOAD. NO REGISTRATION. JUST LEARN. &nbsp;© <span id="year"></span> ruglerugle</p>
+    <div class="footer-suits" aria-hidden="true"><span>🥋</span><span>👉</span><span>🧩</span><span>🔗</span></div>
+  </footer>
+</div>
+<script>document.getElementById("year").textContent = new Date().getFullYear();</script>
+<script src="js/stages.js?v=20261108a"></script>
+<script src="js/progress.js?v=20261108a"></script>
+<script>QUEST.initCompletePage();</script>
+<script src="https://my.habatakijuku.com/sync.js" defer></script>
+</body>
+</html>

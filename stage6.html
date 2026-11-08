@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#123334">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-9RTQCP2HXM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-9RTQCP2HXM');
+</script>
+<title>STAGE6 連結リスト ― C言語ポインタ道場</title>
+<meta name="description" content="構造体の中に「次の構造体の番地」を入れて、ヒープ上のかたまりを鎖のようにつなぐ連結リスト。つなぐ・たどる・全部返すの3つを、コードを1行ずつ実行して確かめる。返す前に次の番地を控える理由も。">
+<link rel="canonical" href="https://informatics.habatakijuku.com/c-pointer-dojo/stage6">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="C言語ポインタ道場">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="STAGE6 連結リスト ― C言語ポインタ道場">
+<meta property="og:description" content="連結リスト。ポインタでヒープのかたまりをつなぎ、たどり、返す。">
+<meta property="og:url" content="https://informatics.habatakijuku.com/c-pointer-dojo/stage6">
+<meta property="og:image" content="https://informatics.habatakijuku.com/images/ogp/c-pointer-dojo.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥋</text></svg>">
+<link rel="stylesheet" href="design-system.css?v=20261108a">
+<link rel="stylesheet" href="stepper.css?v=20261108a">
+<script src="js/stages.js?v=20261108a"></script>
+<script src="js/progress.js?v=20261108a"></script>
+<script src="js/stepper.js?v=20261108a"></script>
+</head>
+<body>
+<div class="app-shell side-collapsed" id="app-shell">
+  <header class="game-header">
+    <div class="brand">
+      <div class="brand-title"><a class="head-reset home-badge" href="./" title="トップへ" aria-label="トップへ">🥋</a> <span>C言語ポインタ道場</span></div>
+      <div class="brand-sub">STAGE 6 ― 連結リスト ―</div>
+    </div>
+    <div class="head-progress-wrap">
+      <div class="head-progress-label" id="progress-label">クリア 0 / 8</div>
+      <div class="head-progress" role="progressbar" aria-label="クリア済みステージ数" aria-valuemin="0" aria-valuemax="8" aria-valuenow="0"><div class="head-progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div class="header-actions">
+      <a class="head-reset" href="/" title="情報の冒険（シリーズの地図）へ">🧭 地図</a>
+      <button class="head-reset" id="btn-reset-all">🔄 最初から</button>
+      <button class="head-reset" id="head-nav-toggle" title="ステージ一覧の表示切替">☰ ナビ</button>
+    </div>
+  </header>
+
+  <div class="game-layout">
+    <div class="side-backdrop" id="side-backdrop"></div>
+    <aside class="side-panel">
+      <div class="side-head">
+        <button class="side-toggle" id="sidebar-toggle" title="ステージ一覧の表示切替" aria-label="ステージ一覧の表示切替">☰</button>
+        <span class="side-head-text">📚 ステージ一覧</span>
+      </div>
+      <div class="side-list" id="side-list"></div>
+    </aside>
+
+    <main class="main-area">
+      <div class="chapter-head">
+        <span class="chapter-badge">STAGE 6</span><h1 class="chapter-title">連結リスト</h1>
+        <div class="chapter-sub">ポインタでつなぐ鎖</div>
+      </div>
+
+      <div class="mission-box">
+        <div class="mission-label">🎯 ミッション</div>
+        <div class="mission-text">連結リストのつなぎ方・たどり方・返し方を説明できるようになろう。コードを最後の行まで実行し、確認クイズに全問正解すれば合格。</div>
+        <span class="mission-status" id="mission-status">未達成</span>
+      </div>
+
+      <div class="dialogue-scene">
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">配列は、要素が番地の連続した場所に並んでいた。だから、途中に1つ割り込ませたいときは、後ろを全部1つずつずらさないといけない。100万個並んでいたら大仕事だ。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">並びを入れ替えるたびに、全部を引っ越しさせるようなものですね。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">そこで、要素をヒープのばらばらの場所に置いて、<strong>それぞれに「次の要素の番地」を持たせる</strong>やり方がある。これを<strong>連結リスト</strong>と呼ぶ。1つ1つの要素を<strong>ノード</strong>（結び目）と呼ぶ。</div>
+        </div>
+      </div>
+      <div class="formula-box">
+        <span class="step"><pre>typedef struct Node {
+          int value;           // 中身
+          struct Node *next;   // 次のノードの番地（最後なら NULL）
+      } Node;</pre></span>
+        <span class="step">構造体の中で自分と同じ型を指すポインタを使うので、名前を struct Node と2回書いている</span>
+      </div>
+      <div class="dialogue-scene">
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbitThink.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble"> 割り込ませたいときは、前のノードの next を新しいノードに向けて、新しいノードの next を元の次に向ければいい。ほかのノードは動かさなくていい。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">そう。つなぎ替えは2か所の書き換えで済む。その代わり、「5番目の要素」に行くには、先頭から next を5回たどらないといけない。配列なら番地の計算1回で行けたのにね。どちらが向いているかは、使い方次第なんだ。</div>
+        </div>
+      </div>
+      <div class="lab" id="st-s6"></div>
+      <script>
+      Stepper.mount(document.getElementById("st-s6"), {
+        id: "ptr-s6-list", title: "2つのノードをつなぎ、たどり、返す",
+        code: [
+          '#include <stdio.h>',
+          '#include <stdlib.h>',
+          '',
+          'typedef struct Node {',
+          '    int value;',
+          '    struct Node *next;',
+          '} Node;',
+          '',
+          'int main(void) {',
+          '    Node *head = malloc(sizeof(Node));',
+          '    Node *second = malloc(sizeof(Node));',
+          '    if (head == NULL || second == NULL) return 1;',
+          '    head->value = 1;',
+          '    second->value = 2;',
+          '    second->next = NULL;',
+          '    head->next = second;',
+          '',
+          '    for (Node *cur = head; cur != NULL; cur = cur->next) {',
+          '        printf("%d\\n", cur->value);',
+          '    }',
+          '',
+          '    Node *cur = head;',
+          '    while (cur != NULL) {',
+          '        Node *next = cur->next;',
+          '        free(cur);',
+          '        cur = next;',
+          '    }',
+          '    return 0;',
+          '}'
+        ],
+        frames: ["main"],
+        steps: [
+          { line: 10, apply: function (m) { M.heap(m, "n1", "Node #1", 16, { fields: [{ key: "v", name: "value", value: "?" }, { key: "n", name: "next", pointsTo: "WILD" }] }); M.svar(m, "main", "head", "head", "Node *", null, "n1"); }, note: "1つ目のノードを借りた（int 4バイト＋すき間4＋ポインタ8で16バイト）。中身はまだ決まっていない。" },
+          { line: 11, apply: function (m) { M.heap(m, "n2", "Node #2", 16, { fields: [{ key: "v", name: "value", value: "?" }, { key: "n", name: "next", pointsTo: "WILD" }] }); M.svar(m, "main", "second", "second", "Node *", null, "n2"); }, note: "2つ目のノードを借りた。ヒープの別の場所にある。" },
+          { line: 12, apply: M.nop, note: "両方借りられたか確かめた。" },
+          { line: 13, apply: function (m) { M.field(m, "n1", "v", { value: 1 }); }, note: "<code>head-&gt;value = 1;</code>" },
+          { line: 14, apply: function (m) { M.field(m, "n2", "v", { value: 2 }); }, note: "<code>second-&gt;value = 2;</code>" },
+          { line: 15, apply: function (m) { M.field(m, "n2", "n", { pointsTo: "NULL" }); }, note: "2つ目は最後なので next は NULL。" },
+          { line: 16, apply: function (m) { M.field(m, "n1", "n", { pointsTo: "n2" }); }, note: "<code>head-&gt;next = second;</code> ― 1つ目の next に2つ目の番地が入った。ヒープの中で、ノードからノードへ矢印がつながった。" },
+          { line: 18, apply: function (m) { M.push(m, "for", "for のくり返し"); M.svar(m, "for", "c1", "cur", "Node *", null, "n1"); }, note: "たどるためのポインタ cur を先頭に置く。" },
+          { line: 19, apply: M.nop, note: "cur の value を表示：<b>1</b>" },
+          { line: 18, apply: function (m) { M.set(m, "for", "c1", { pointsTo: "n2" }); }, note: "<code>cur = cur-&gt;next</code> ― 次のノードへ進んだ。" },
+          { line: 19, apply: M.nop, note: "表示：<b>2</b>" },
+          { line: 18, apply: function (m) { M.set(m, "for", "c1", { pointsTo: "NULL" }); }, note: "2つ目の next は NULL なので cur は NULL。くり返しが終わる。" },
+          { line: 22, apply: function (m) { M.pop(m, "for"); M.svar(m, "main", "cur", "cur", "Node *", null, "n1"); }, note: "全部返すために、もう一度先頭から。" },
+          { line: 24, apply: function (m) { M.svar(m, "main", "next", "next", "Node *", null, "n2"); }, note: "<b>返す前に</b>、次のノードの番地を next に控えておく。" },
+          { line: 25, apply: function (m) { M.free(m, "n1"); }, note: "1つ目を返した。cur は返した場所を指しているので、もう cur-&gt;next は読めない。でも次の番地は控えてある。" },
+          { line: 26, apply: function (m) { M.set(m, "main", "cur", { pointsTo: "n2" }); }, note: "控えておいた番地へ進む。" },
+          { line: 24, apply: function (m) { M.set(m, "main", "next", { pointsTo: "NULL" }); }, note: "2つ目の次（NULL）を控える。" },
+          { line: 25, apply: function (m) { M.free(m, "n2"); }, note: "2つ目も返した。" },
+          { line: 26, apply: function (m) { M.set(m, "main", "cur", { pointsTo: "NULL" }); }, note: "cur は NULL になり、くり返しが終わる。全部返し終わった。" },
+          { line: 29, apply: function (m) { M.pop(m, "main"); }, note: "main が終わった。head と second は返した場所を指したまま消えたが、使わないので問題はない。" }
+        ]
+      });
+      </script>
+      <div class="dialogue-scene">
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">返すときに next を先に控えていたのは、free した後に cur-&gt;next を読むと、返した場所を読むことになるからですね。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">その通り。<code>free(cur); cur = cur-&gt;next;</code> と順番を逆に書くと、解放後の使用になる。しかも多くの場合、返した直後は古い値が残っているので、たまたま動いてしまう。だから見つけにくいんだ。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">for の中で使った cur は、くり返しが終わると消えていました。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">for の () の中で宣言した変数は、そのくり返しの間だけ使える。だから、あとの while では別に cur を宣言し直している。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">連結リストの先頭のノードを消したいときは、何を書き換える必要があるかな。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbitThink.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble"> 先頭を消したら、2つ目が新しい先頭になる。だから head を2つ目に向け直す。……head は main の変数だから、別の関数の中で先頭を消すなら、head の番地を渡さないといけない。STAGE5 の int ** と同じ形の、Node ** が要りますね。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">そう。それが最後の総合稽古で作る deleteNode のいちばん大事なところになる。その前に、ポインタでよくある間違いを道場で稽古しておこう。</div>
+        </div>
+      </div>
+
+      <h2 class="quiz-head">確認クイズ</h2>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q1. <code>head-&gt;next = second;</code> を実行すると、何が起きる？</p>
+        <div class="choice-list">
+          <button class="choice-btn">second という変数そのものが、1つ目のノードの中に移される</button>
+          <button class="choice-btn">1つ目のノードの next に、2つ目のノードの番地が入る</button>
+          <button class="choice-btn">2つ目のノードの中身が、1つ目にコピーされる</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ next はポインタなので、入るのは番地。これでノードからノードへたどれるようになる。</div>
+      </div>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q2. リストを全部返すときに、<code>free(cur);</code> の前に次の番地を控える理由は？</p>
+        <div class="choice-list">
+          <button class="choice-btn">free した後に cur-&gt;next を読むと、返した場所を読むことになる（解放後の使用）から</button>
+          <button class="choice-btn">free すると next も自動で NULL になるから</button>
+          <button class="choice-btn">控えないとコンパイルできないから</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ 返した場所の中身を読むのは未定義動作。先に次の番地を別の変数に移しておく。</div>
+      </div>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q3. 連結リストが配列より得意なことは？</p>
+        <div class="choice-list">
+          <button class="choice-btn">5番目の要素に、番地の計算1回で行ける</button>
+          <button class="choice-btn">要素どうしが連続した番地に並ぶので、キャッシュに当たりやすい</button>
+          <button class="choice-btn">途中への割り込みや取り外しを、前後の next の書き換えだけでできる</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ 配列は途中に入れると後ろを全部ずらす必要がある。リストはつなぎ替えだけで済む。逆に、何番目かへ行くにはたどる必要があり、番地もばらばらでキャッシュに当たりにくい。</div>
+      </div>
+
+      <div class="stage-nav">
+        <a class="btn" href="stage5.html">← 前のステージ</a>
+        <button class="btn btn-primary" id="btn-next" disabled>次へ →</button>
+      </div>
+
+      <div id="book-recommend"></div>
+    </main>
+  </div>
+</div>
+
+<script>QUEST.initStagePage(6);</script>
+
+<script src="https://my.habatakijuku.com/sync.js" defer></script>
+</body>
+</html>

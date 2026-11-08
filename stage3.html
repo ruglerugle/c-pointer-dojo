@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#123334">
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-9RTQCP2HXM"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-9RTQCP2HXM');
+</script>
+<title>STAGE3 malloc と free ― C言語ポインタ道場</title>
+<meta name="description" content="malloc でヒープから借り、失敗していないか NULL を確かめ、使い終わったら free で返し、ポインタに NULL を入れる。この4つの手順と、「未定義動作」という C言語の大事な言葉を、コードを1行ずつ実行して確かめる。">
+<link rel="canonical" href="https://informatics.habatakijuku.com/c-pointer-dojo/stage3">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="C言語ポインタ道場">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:title" content="STAGE3 malloc と free ― C言語ポインタ道場">
+<meta property="og:description" content="借りて、確かめて、返して、NULL を入れる。malloc と free の正しい使い方。">
+<meta property="og:url" content="https://informatics.habatakijuku.com/c-pointer-dojo/stage3">
+<meta property="og:image" content="https://informatics.habatakijuku.com/images/ogp/c-pointer-dojo.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥋</text></svg>">
+<link rel="stylesheet" href="design-system.css?v=20261108a">
+<link rel="stylesheet" href="stepper.css?v=20261108a">
+<script src="js/stages.js?v=20261108a"></script>
+<script src="js/progress.js?v=20261108a"></script>
+<script src="js/stepper.js?v=20261108a"></script>
+</head>
+<body>
+<div class="app-shell side-collapsed" id="app-shell">
+  <header class="game-header">
+    <div class="brand">
+      <div class="brand-title"><a class="head-reset home-badge" href="./" title="トップへ" aria-label="トップへ">🥋</a> <span>C言語ポインタ道場</span></div>
+      <div class="brand-sub">STAGE 3 ― malloc と free ―</div>
+    </div>
+    <div class="head-progress-wrap">
+      <div class="head-progress-label" id="progress-label">クリア 0 / 8</div>
+      <div class="head-progress" role="progressbar" aria-label="クリア済みステージ数" aria-valuemin="0" aria-valuemax="8" aria-valuenow="0"><div class="head-progress-fill" id="progress-fill" style="width:0%"></div></div>
+    </div>
+    <div class="header-actions">
+      <a class="head-reset" href="/" title="情報の冒険（シリーズの地図）へ">🧭 地図</a>
+      <button class="head-reset" id="btn-reset-all">🔄 最初から</button>
+      <button class="head-reset" id="head-nav-toggle" title="ステージ一覧の表示切替">☰ ナビ</button>
+    </div>
+  </header>
+
+  <div class="game-layout">
+    <div class="side-backdrop" id="side-backdrop"></div>
+    <aside class="side-panel">
+      <div class="side-head">
+        <button class="side-toggle" id="sidebar-toggle" title="ステージ一覧の表示切替" aria-label="ステージ一覧の表示切替">☰</button>
+        <span class="side-head-text">📚 ステージ一覧</span>
+      </div>
+      <div class="side-list" id="side-list"></div>
+    </aside>
+
+    <main class="main-area">
+      <div class="chapter-head">
+        <span class="chapter-badge">STAGE 3</span><h1 class="chapter-title">malloc と free</h1>
+        <div class="chapter-sub">借りて、確かめて、返す</div>
+      </div>
+
+      <div class="mission-box">
+        <div class="mission-label">🎯 ミッション</div>
+        <div class="mission-text">malloc と free の正しい手順と、返したあとのポインタが危険な理由を説明できるようになろう。コードを最後の行まで実行し、確認クイズに全問正解すれば合格。</div>
+        <span class="mission-status" id="mission-status">未達成</span>
+      </div>
+
+      <div class="dialogue-scene">
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">ヒープから借りる関数 malloc を、実際のコードで使おう。使うには <code>#include &lt;stdlib.h&gt;</code> が必要だ。int を3つ分借りるなら、こう書く。</div>
+        </div>
+      </div>
+      <div class="formula-box">
+        <span class="step"><code>int *p = malloc(sizeof(int) * 3);</code></span>
+        <span class="step">sizeof(int) * 3：借りるバイト数（多くの環境で12）。大きさを数字で決め打ちせず sizeof で書く</span>
+        <span class="step">malloc の答え：借りた場所の先頭の番地（型は void *、つまり「何を指すか決まっていない番地」）。C言語では、そのまま int * の変数に入れてよい</span>
+      </div>
+      <div class="dialogue-scene">
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">古い本で <code>(int *)malloc(…)</code> のように、前にかっこを付けている書き方を見たことがあります。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">C言語では、void * はほかのどんなポインタの型にも自動で変わるので、そのかっこ（キャストと呼ぶ）は要らない。かえって、stdlib.h を書き忘れたときの警告を隠してしまうことがあるので、今は付けないのがふつうだ。（C++ という別の言語では必要になる。）</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">malloc は、いつでも成功するんですか？</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">失敗することがある。とても大きな大きさを頼んだときなどだ。失敗すると malloc は <strong>NULL</strong> を返す。だから、借りたら<strong>すぐに NULL でないか確かめる</strong>のが決まりだ。確かめずに NULL の先に書き込むと、プログラムがどうなるかは決まっていない。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">「どうなるか決まっていない」というのは、エラーで止まるのとは違うんですか？</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">大事なところだね。C言語の決まりには、<strong>未定義動作</strong>という言葉がある。「この書き方をしたら何が起きるかを、C言語は一切約束しない」という意味だ。たまたま止まることもあれば、何事もなく動いているように見えることも、まったく別のデータを壊すこともある。NULL の先に書くのは、多くのパソコンでは OS に止められるけれど、それも約束ではないんだ。</div>
+        </div>
+      </div>
+      <div class="formula-box">
+        <span class="step"><strong>未定義動作</strong>：何が起きるかを C言語が約束しない書き方。止まる・動いて見える・別のものを壊す、のどれも起こりうる</span>
+        <span class="step">例：NULL やでたらめな番地の先を読み書きする／配列の範囲の外を使う／返した場所を使う／同じ場所を2回返す</span>
+      </div>
+      <div class="lab" id="st-s3"></div>
+      <script>
+      Stepper.mount(document.getElementById("st-s3"), {
+        id: "ptr-s3-heap", title: "借りて、確かめて、返す",
+        code: [
+          '#include <stdio.h>',
+          '#include <stdlib.h>',
+          '',
+          'int main(void) {',
+          '    int *p = malloc(sizeof(int) * 3);',
+          '    if (p == NULL) {',
+          '        return 1;',
+          '    }',
+          '    p[0] = 100;',
+          '    p[1] = 200;',
+          '    p[2] = 300;',
+          '    printf("%d\\n", p[1]);',
+          '    free(p);',
+          '    p = NULL;',
+          '    return 0;',
+          '}'
+        ],
+        frames: ["main"],
+        steps: [
+          { line: 5, apply: function (m) { M.heap(m, "h", "malloc(int×3)", 12, { fields: [{ key: "0", name: "p[0]", value: "?" }, { key: "1", name: "p[1]", value: "?" }, { key: "2", name: "p[2]", value: "?" }] }); M.svar(m, "main", "p", "p", "int *", null, "h"); }, note: "ヒープに12バイトを借り、その先頭の番地が p に入った。借りた直後の中身は決まっていない（?）。" },
+          { line: 6, apply: M.nop, note: "失敗していないか確かめる。今回は借りられたので、if の中は飛ばす。失敗していたら、使う前にここで終わる。" },
+          { line: 9, apply: function (m) { M.field(m, "h", "0", { value: 100 }); }, note: "<code>p[0] = 100;</code> ― p[0] は *(p + 0)。ヒープの1つ目の int に書く。" },
+          { line: 10, apply: function (m) { M.field(m, "h", "1", { value: 200 }); }, note: "<code>p[1] = 200;</code>" },
+          { line: 11, apply: function (m) { M.field(m, "h", "2", { value: 300 }); }, note: "<code>p[2] = 300;</code>" },
+          { line: 12, apply: M.nop, note: "表示は <b>200</b>。" },
+          { line: 13, apply: function (m) { M.free(m, "h"); }, note: "<code>free(p);</code> ― 借りた場所を返した。でも <b>p の中身（番地）はそのまま</b>。p はもう使ってはいけない場所を指している（宙ぶらりんのポインタ）。矢印が赤い点線になった。" },
+          { line: 14, apply: function (m) { M.set(m, "main", "p", { pointsTo: "NULL" }); }, note: "<code>p = NULL;</code> ― p をどこも指さない状態にした。うっかり p を使っても、返した場所を黙って書き換えることはなくなる。" },
+          { line: 16, apply: function (m) { M.pop(m, "main"); }, note: "main が終わった。ヒープの12バイトはすでに返してあるので、取り残しは無い。" }
+        ]
+      });
+      </script>
+      <div class="dialogue-scene">
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">free(p) をしても p の中身が変わらないのは、なぜですか？ free が NULL にしてくれれば安全なのに。</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">free は番地の<strong>コピー</strong>を受け取るだけだからだ。STAGE5 で詳しく見るけれど、C言語の関数は引数の値のコピーしか受け取らない。だから free の中から、呼んだ側の変数 p を書き換えることはできないんだ。p を NULL にするのは、呼んだ側の仕事になる。</div>
+        </div>
+        <div class="dialog-row right">
+          <div class="dialog-character">
+            <div class="dialog-avatar student"><img src="images/rabbit.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name student">うさ美</div>
+          </div>
+          <div class="dialog-bubble">返した後の p を使ったら、どうなりますか？</div>
+        </div>
+        <div class="dialog-row">
+          <div class="dialog-character">
+            <div class="dialog-avatar mentor"><img src="images/cat.webp" width="300" height="386" alt=""></div>
+            <div class="dialog-name mentor">ねこ博士</div>
+          </div>
+          <div class="dialog-bubble">返した場所は、次の malloc で別の用途に貸し出されるかもしれない。そこを p で書き換えたら、別のデータを壊す。これも未定義動作だ。しかも、すぐには何も起きないことが多いので、見つけにくい。</div>
+        </div>
+      </div>
+      <div class="formula-box">
+        <span class="step">① 借りる：<code>p = malloc(sizeof(型) * 個数);</code></span>
+        <span class="step">② 確かめる：<code>if (p == NULL) { 失敗したときの処理 }</code></span>
+        <span class="step">③ 使い終わったら返す：<code>free(p);</code>（1回だけ。NULL を free するのは何もしないので安全）</span>
+        <span class="step">④ 返したら：<code>p = NULL;</code></span>
+      </div>
+
+      <h2 class="quiz-head">確認クイズ</h2>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q1. malloc で借りた直後に <code>if (p == NULL)</code> を確かめる理由は？</p>
+        <div class="choice-list">
+          <button class="choice-btn">借りた中身がすべて 0 になっているかを確かめるため</button>
+          <button class="choice-btn">借りるのに失敗すると NULL が返り、そのまま使うと未定義動作になるから</button>
+          <button class="choice-btn">NULL と比べると、借りた場所が速くなるから</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ malloc は失敗すると NULL を返す。使う前に確かめて、失敗したときの処理を書く。</div>
+      </div>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q2. <code>free(p);</code> の直後の p について正しいのは？</p>
+        <div class="choice-list">
+          <button class="choice-btn">p の中身（番地）は変わらず、もう使ってはいけない場所を指している</button>
+          <button class="choice-btn">free が p を自動で NULL にする</button>
+          <button class="choice-btn">p 自身の8バイトもヒープに返される</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ free は p のコピーを受け取るだけで、p は書き換えない。返した場所を指したままなので、p = NULL; を入れるのが安全。</div>
+      </div>
+      <div class="quiz-card" data-quiz>
+        <p class="quiz-q">Q3. 「未定義動作」の意味は？</p>
+        <div class="choice-list">
+          <button class="choice-btn">コンパイラが必ずエラーを出して、翻訳できない書き方</button>
+          <button class="choice-btn">実行すると必ずプログラムが止まる書き方</button>
+          <button class="choice-btn">何が起きるかを C言語が一切約束しない書き方。止まることも、動いて見えることも、別のものを壊すこともある</button>
+        </div>
+        <div class="quiz-explain" hidden>正解！ 「止まってくれる」とは限らないのが怖いところ。動いて見えるまま、別の場所を壊していることがある。</div>
+      </div>
+
+      <div class="stage-nav">
+        <a class="btn" href="stage2.html">← 前のステージ</a>
+        <button class="btn btn-primary" id="btn-next" disabled>次へ →</button>
+      </div>
+
+      <div id="book-recommend"></div>
+    </main>
+  </div>
+</div>
+
+<script>QUEST.initStagePage(3);</script>
+
+<script src="https://my.habatakijuku.com/sync.js" defer></script>
+</body>
+</html>
