@@ -26,11 +26,11 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥋</text></svg>">
-<link rel="stylesheet" href="design-system.css?v=20261108a">
-<link rel="stylesheet" href="stepper.css?v=20261108a">
-<script src="js/stages.js?v=20261108a"></script>
-<script src="js/progress.js?v=20261108a"></script>
-<script src="js/stepper.js?v=20261108a"></script>
+<link rel="stylesheet" href="design-system.css?v=20261108b">
+<link rel="stylesheet" href="stepper.css?v=20261108b">
+<script src="js/stages.js?v=20261108b"></script>
+<script src="js/progress.js?v=20261108b"></script>
+<script src="js/stepper.js?v=20261108b"></script>
 </head>
 <body>
 <div class="app-shell side-collapsed" id="app-shell">
@@ -95,37 +95,37 @@
           <div class="dialog-bubble">まず、その書き方で動かしてみよう。</div>
         </div>
       </div>
-      <div class="lab" id="st-s5a"></div>
-      <script>
-      Stepper.mount(document.getElementById("st-s5a"), {
-        id: "ptr-s5-bad", title: "うまくいかない版（int * で受け取る）",
-        code: [
-          '#include <stdlib.h>',
-          '',
-          'void allocate(int *out) {',
-          '    out = malloc(sizeof(int));',
-          '    *out = 42;',
-          '}',
-          '',
-          'int main(void) {',
-          '    int *p = NULL;',
-          '    allocate(p);',
-          '    // ここで p は？',
-          '    return 0;',
-          '}'
-        ],
-        frames: ["main"],
-        steps: [
-          { line: 9, apply: function (m) { M.svar(m, "main", "p", "p", "int *", null, "NULL"); }, note: "main の p は NULL。" },
-          { line: 10, apply: function (m) { M.push(m, "allocate"); M.svar(m, "allocate", "out", "out", "int *", null, "NULL"); }, note: "allocate(p) を呼ぶと、allocate の板に out が作られ、p の値（NULL）が<b>コピー</b>される。out と p は別々の箱。" },
-          { line: 4, apply: function (m) { M.heap(m, "h", "malloc(int)", 4, { value: "?" }); M.set(m, "allocate", "out", { pointsTo: "h" }); }, note: "<code>out = malloc(...)</code> ― 書き換わったのは allocate の中の out だけ。main の p は NULL のまま。" },
-          { line: 5, apply: function (m) { M.hval(m, "h", 42); }, note: "<code>*out = 42;</code> ― ヒープに 42 が入った。" },
-          { line: 6, apply: function (m) { M.pop(m, "allocate"); }, note: "allocate が終わり、out は板ごと消えた。借りた4バイトの番地を覚えているものは、もうどこにも無い（メモリリーク）。" },
-          { line: 11, apply: M.nop, note: "main の p は <b>NULL のまま</b>。ここで *p を使えば、NULL の先を読む未定義動作になる。" },
-          { line: 13, apply: function (m) { M.pop(m, "main"); }, note: "ヒープの4バイトは返されないまま残った。" }
-        ]
-      });
-      </script>
+<div class="lab" id="st-s5a"></div>
+<script>
+Stepper.mount(document.getElementById("st-s5a"), {
+  id: "ptr-s5-bad", title: "うまくいかない版（int * で受け取る）",
+  code: [
+    '#include <stdlib.h>',
+    '',
+    'void allocate(int *out) {',
+    '    out = malloc(sizeof(int));',
+    '    *out = 42;',
+    '}',
+    '',
+    'int main(void) {',
+    '    int *p = NULL;',
+    '    allocate(p);',
+    '    // ここで p は？',
+    '    return 0;',
+    '}'
+  ],
+  frames: ["main"],
+  steps: [
+    { line: 9, apply: function (m) { M.svar(m, "main", "p", "p", "int *", null, "NULL"); }, note: "main の p は NULL。" },
+    { line: 10, apply: function (m) { M.push(m, "allocate"); M.svar(m, "allocate", "out", "out", "int *", null, "NULL"); }, note: "allocate(p) を呼ぶと、allocate の板に out が作られ、p の値（NULL）が<b>コピー</b>される。out と p は別々の箱。" },
+    { line: 4, apply: function (m) { M.heap(m, "h", "malloc(int)", 4, { value: "?" }); M.set(m, "allocate", "out", { pointsTo: "h" }); }, note: "<code>out = malloc(...)</code> ― 書き換わったのは allocate の中の out だけ。main の p は NULL のまま。" },
+    { line: 5, apply: function (m) { M.hval(m, "h", 42); }, note: "<code>*out = 42;</code> ― ヒープに 42 が入った。" },
+    { line: 6, apply: function (m) { M.pop(m, "allocate"); }, note: "allocate が終わり、out は板ごと消えた。借りた4バイトの番地を覚えているものは、もうどこにも無い（メモリリーク）。" },
+    { line: 11, apply: M.nop, note: "main の p は <b>NULL のまま</b>。ここで *p を使えば、NULL の先を読む未定義動作になる。" },
+    { line: 13, apply: function (m) { M.pop(m, "main"); }, note: "ヒープの4バイトは返されないまま残った。" }
+  ]
+});
+</script>
       <div class="dialogue-scene">
         <div class="dialog-row right">
           <div class="dialog-character">
@@ -156,48 +156,48 @@
           <div class="dialog-bubble">それを <code>int **</code>（int を指すポインタを指すポインタ）と書く。関数の中では、<code>*out</code> が「out の指す箱」、つまり main の p そのものになる。</div>
         </div>
       </div>
-      <div class="formula-box">
-        <span class="step"><code>void allocate(int **out)</code>　／　呼ぶとき：<code>allocate(&amp;p);</code></span>
-        <span class="step"><code>out</code>：p の番地　→　<code>*out</code>：p そのもの　→　<code>**out</code>：p の指す int</span>
-      </div>
-      <div class="lab" id="st-s5b"></div>
-      <script>
-      Stepper.mount(document.getElementById("st-s5b"), {
-        id: "ptr-s5-good", title: "うまくいく版（int ** で受け取る）",
-        code: [
-          '#include <stdio.h>',
-          '#include <stdlib.h>',
-          '',
-          'void allocate(int **out) {',
-          '    *out = malloc(sizeof(int));',
-          '    if (*out == NULL) return;',
-          '    **out = 42;',
-          '}',
-          '',
-          'int main(void) {',
-          '    int *p = NULL;',
-          '    allocate(&p);',
-          '    if (p != NULL) printf("%d\\n", *p);',
-          '    free(p);',
-          '    p = NULL;',
-          '    return 0;',
-          '}'
-        ],
-        frames: ["main"],
-        steps: [
-          { line: 11, apply: function (m) { M.svar(m, "main", "p", "p", "int *", null, "NULL"); }, note: "main の p は NULL。" },
-          { line: 12, apply: function (m) { M.push(m, "allocate"); M.svar(m, "allocate", "out", "out", "int **", null, "p"); }, note: "<code>allocate(&amp;p)</code> ― p の<b>番地</b>がコピーされて out に入った。out は main の p を指している。" },
-          { line: 5, apply: function (m) { M.heap(m, "h", "malloc(int)", 4, { value: "?" }); M.set(m, "main", "p", { pointsTo: "h" }); }, note: "<code>*out = malloc(...)</code> ― *out は main の p そのもの。だから p がヒープを指すように書き換わった。" },
-          { line: 6, apply: M.nop, note: "借りられたか確かめる。" },
-          { line: 7, apply: function (m) { M.hval(m, "h", 42); }, note: "<code>**out = 42;</code> ― out の指す p の指す int に 42。2段たどっている。" },
-          { line: 8, apply: function (m) { M.pop(m, "allocate"); }, note: "allocate が終わり out は消えたが、p はもう書き換わっているので番地は失われない。" },
-          { line: 13, apply: M.nop, note: "表示は <b>42</b>。" },
-          { line: 14, apply: function (m) { M.free(m, "h"); }, note: "返した。" },
-          { line: 15, apply: function (m) { M.set(m, "main", "p", { pointsTo: "NULL" }); }, note: "p を NULL に。" },
-          { line: 16, apply: function (m) { M.pop(m, "main"); }, note: "main が終わった。取り残しは無い。" }
-        ]
-      });
-      </script>
+<div class="formula-box">
+  <span class="step"><code>void allocate(int **out)</code>　／　呼ぶとき：<code>allocate(&amp;p);</code></span>
+  <span class="step"><code>out</code>：p の番地　→　<code>*out</code>：p そのもの　→　<code>**out</code>：p の指す int</span>
+</div>
+<div class="lab" id="st-s5b"></div>
+<script>
+Stepper.mount(document.getElementById("st-s5b"), {
+  id: "ptr-s5-good", title: "うまくいく版（int ** で受け取る）",
+  code: [
+    '#include <stdio.h>',
+    '#include <stdlib.h>',
+    '',
+    'void allocate(int **out) {',
+    '    *out = malloc(sizeof(int));',
+    '    if (*out == NULL) return;',
+    '    **out = 42;',
+    '}',
+    '',
+    'int main(void) {',
+    '    int *p = NULL;',
+    '    allocate(&p);',
+    '    if (p != NULL) printf("%d\\n", *p);',
+    '    free(p);',
+    '    p = NULL;',
+    '    return 0;',
+    '}'
+  ],
+  frames: ["main"],
+  steps: [
+    { line: 11, apply: function (m) { M.svar(m, "main", "p", "p", "int *", null, "NULL"); }, note: "main の p は NULL。" },
+    { line: 12, apply: function (m) { M.push(m, "allocate"); M.svar(m, "allocate", "out", "out", "int **", null, "p"); }, note: "<code>allocate(&amp;p)</code> ― p の<b>番地</b>がコピーされて out に入った。out は main の p を指している。" },
+    { line: 5, apply: function (m) { M.heap(m, "h", "malloc(int)", 4, { value: "?" }); M.set(m, "main", "p", { pointsTo: "h" }); }, note: "<code>*out = malloc(...)</code> ― *out は main の p そのもの。だから p がヒープを指すように書き換わった。" },
+    { line: 6, apply: M.nop, note: "借りられたか確かめる。" },
+    { line: 7, apply: function (m) { M.hval(m, "h", 42); }, note: "<code>**out = 42;</code> ― out の指す p の指す int に 42。2段たどっている。" },
+    { line: 8, apply: function (m) { M.pop(m, "allocate"); }, note: "allocate が終わり out は消えたが、p はもう書き換わっているので番地は失われない。" },
+    { line: 13, apply: M.nop, note: "表示は <b>42</b>。" },
+    { line: 14, apply: function (m) { M.free(m, "h"); }, note: "返した。" },
+    { line: 15, apply: function (m) { M.set(m, "main", "p", { pointsTo: "NULL" }); }, note: "p を NULL に。" },
+    { line: 16, apply: function (m) { M.pop(m, "main"); }, note: "main が終わった。取り残しは無い。" }
+  ]
+});
+</script>
       <div class="dialogue-scene">
         <div class="dialog-row right">
           <div class="dialog-character">

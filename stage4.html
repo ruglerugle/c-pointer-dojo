@@ -26,11 +26,11 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥋</text></svg>">
-<link rel="stylesheet" href="design-system.css?v=20261108a">
-<link rel="stylesheet" href="stepper.css?v=20261108a">
-<script src="js/stages.js?v=20261108a"></script>
-<script src="js/progress.js?v=20261108a"></script>
-<script src="js/stepper.js?v=20261108a"></script>
+<link rel="stylesheet" href="design-system.css?v=20261108b">
+<link rel="stylesheet" href="stepper.css?v=20261108b">
+<script src="js/stages.js?v=20261108b"></script>
+<script src="js/progress.js?v=20261108b"></script>
+<script src="js/stepper.js?v=20261108b"></script>
 </head>
 <body>
 <div class="app-shell side-collapsed" id="app-shell">
@@ -81,13 +81,13 @@
           <div class="dialog-bubble">ゲームのプレイヤーの「番号」と「得点」のように、いくつかの値をひとまとめにして扱いたいことがある。そのための道具が<strong>構造体</strong>だ。</div>
         </div>
       </div>
-      <div class="formula-box">
-        <span class="step"><pre>typedef struct {
-          int id;        // 番号（4バイト）
-          double score;  // 得点（8バイト。小数を入れられる数）
-      } Player;</pre></span>
-        <span class="step">typedef … Player; で、このまとまりに Player という型の名前を付ける。中の id や score を<strong>メンバ</strong>と呼ぶ</span>
-      </div>
+<div class="formula-box">
+  <span class="step"><pre>typedef struct {
+    int id;        // 番号（4バイト）
+    double score;  // 得点（8バイト。小数を入れられる数）
+} Player;</pre></span>
+  <span class="step">typedef … Player; で、このまとまりに Player という型の名前を付ける。中の id や score を<strong>メンバ</strong>と呼ぶ</span>
+</div>
       <div class="dialogue-scene">
         <div class="dialog-row right">
           <div class="dialog-character">
@@ -132,9 +132,9 @@
           <div class="dialog-bubble">そう。その空いた4バイトを<strong>パディング</strong>（詰め物）と呼ぶ。コンパイラが自動で入れるんだ。だから、構造体の大きさは、メンバの大きさの単純な合計とは限らない。メンバの並べ方で大きさが変わることもある。必ず sizeof で調べよう。</div>
         </div>
       </div>
-      <div class="formula-box">
-        <span class="step">id：0〜3 番地　／　すき間（パディング）：4〜7 番地　／　score：8〜15 番地　→ sizeof(Player) ＝ 16</span>
-      </div>
+<div class="formula-box">
+  <span class="step">id：0〜3 番地　／　すき間（パディング）：4〜7 番地　／　score：8〜15 番地　→ sizeof(Player) ＝ 16</span>
+</div>
       <div class="dialogue-scene">
         <div class="dialog-row">
           <div class="dialog-character">
@@ -158,43 +158,43 @@
           <div class="dialog-bubble">正しい。かっこが要るのは、* より . のほうが先に計算される決まりだからだ。*p.id と書くと *(p.id) の意味になって、おかしなことになる。毎回 (*p).id と書くのは面倒なので、C言語には<strong>まったく同じ意味の省略形</strong> <code>p-&gt;id</code> が用意されている。矢印の形をしているから「アロー演算子」と呼ぶ。</div>
         </div>
       </div>
-      <div class="lab" id="st-s4"></div>
-      <script>
-      Stepper.mount(document.getElementById("st-s4"), {
-        id: "ptr-s4-struct", title: "構造体をヒープに借りる",
-        code: [
-          '#include <stdio.h>',
-          '#include <stdlib.h>',
-          '',
-          'typedef struct {',
-          '    int id;',
-          '    double score;',
-          '} Player;',
-          '',
-          'int main(void) {',
-          '    Player *pl = malloc(sizeof(Player));',
-          '    if (pl == NULL) return 1;',
-          '    pl->id = 1;',
-          '    pl->score = 98.5;',
-          '    printf("%d %.1f %zu\\n", pl->id, pl->score, sizeof(Player));',
-          '    free(pl);',
-          '    pl = NULL;',
-          '    return 0;',
-          '}'
-        ],
-        frames: ["main"],
-        steps: [
-          { line: 10, apply: function (m) { M.heap(m, "h", "Player（16バイト）", 16, { fields: [{ key: "id", name: "id（4）", value: "?" }, { key: "pad", name: "すき間（4）", value: "―" }, { key: "score", name: "score（8）", value: "?" }] }); M.svar(m, "main", "pl", "pl", "Player *", null, "h"); }, note: "Player 1つ分、16バイトをヒープに借りた。id と score のあいだに4バイトのすき間がある。" },
-          { line: 11, apply: M.nop, note: "借りられたかを確かめる（成功したので先へ）。" },
-          { line: 12, apply: function (m) { M.field(m, "h", "id", { value: 1 }); }, note: "<code>pl-&gt;id = 1;</code> ― <code>(*pl).id = 1;</code> とまったく同じ。pl の指す構造体の id に書いた。" },
-          { line: 13, apply: function (m) { M.field(m, "h", "score", { value: 98.5 }); }, note: "<code>pl-&gt;score = 98.5;</code>" },
-          { line: 14, apply: M.nop, note: "表示は <b>1 98.5 16</b>。%.1f は小数を1けたまで表示する書き方。" },
-          { line: 15, apply: function (m) { M.free(m, "h"); }, note: "構造体の16バイトを返した。pl は返した場所を指したまま。" },
-          { line: 16, apply: function (m) { M.set(m, "main", "pl", { pointsTo: "NULL" }); }, note: "pl を NULL にした。" },
-          { line: 17, apply: function (m) { M.pop(m, "main"); }, note: "main が終わった。" }
-        ]
-      });
-      </script>
+<div class="lab" id="st-s4"></div>
+<script>
+Stepper.mount(document.getElementById("st-s4"), {
+  id: "ptr-s4-struct", title: "構造体をヒープに借りる",
+  code: [
+    '#include <stdio.h>',
+    '#include <stdlib.h>',
+    '',
+    'typedef struct {',
+    '    int id;',
+    '    double score;',
+    '} Player;',
+    '',
+    'int main(void) {',
+    '    Player *pl = malloc(sizeof(Player));',
+    '    if (pl == NULL) return 1;',
+    '    pl->id = 1;',
+    '    pl->score = 98.5;',
+    '    printf("%d %.1f %zu\\n", pl->id, pl->score, sizeof(Player));',
+    '    free(pl);',
+    '    pl = NULL;',
+    '    return 0;',
+    '}'
+  ],
+  frames: ["main"],
+  steps: [
+    { line: 10, apply: function (m) { M.heap(m, "h", "Player（16バイト）", 16, { fields: [{ key: "id", name: "id（4）", value: "?" }, { key: "pad", name: "すき間（4）", value: "―" }, { key: "score", name: "score（8）", value: "?" }] }); M.svar(m, "main", "pl", "pl", "Player *", null, "h"); }, note: "Player 1つ分、16バイトをヒープに借りた。id と score のあいだに4バイトのすき間がある。" },
+    { line: 11, apply: M.nop, note: "借りられたかを確かめる（成功したので先へ）。" },
+    { line: 12, apply: function (m) { M.field(m, "h", "id", { value: 1 }); }, note: "<code>pl-&gt;id = 1;</code> ― <code>(*pl).id = 1;</code> とまったく同じ。pl の指す構造体の id に書いた。" },
+    { line: 13, apply: function (m) { M.field(m, "h", "score", { value: 98.5 }); }, note: "<code>pl-&gt;score = 98.5;</code>" },
+    { line: 14, apply: M.nop, note: "表示は <b>1 98.5 16</b>。%.1f は小数を1けたまで表示する書き方。" },
+    { line: 15, apply: function (m) { M.free(m, "h"); }, note: "構造体の16バイトを返した。pl は返した場所を指したまま。" },
+    { line: 16, apply: function (m) { M.set(m, "main", "pl", { pointsTo: "NULL" }); }, note: "pl を NULL にした。" },
+    { line: 17, apply: function (m) { M.pop(m, "main"); }, note: "main が終わった。" }
+  ]
+});
+</script>
       <div class="dialogue-scene">
         <div class="dialog-row right">
           <div class="dialog-character">

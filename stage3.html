@@ -26,11 +26,11 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥋</text></svg>">
-<link rel="stylesheet" href="design-system.css?v=20261108a">
-<link rel="stylesheet" href="stepper.css?v=20261108a">
-<script src="js/stages.js?v=20261108a"></script>
-<script src="js/progress.js?v=20261108a"></script>
-<script src="js/stepper.js?v=20261108a"></script>
+<link rel="stylesheet" href="design-system.css?v=20261108b">
+<link rel="stylesheet" href="stepper.css?v=20261108b">
+<script src="js/stages.js?v=20261108b"></script>
+<script src="js/progress.js?v=20261108b"></script>
+<script src="js/stepper.js?v=20261108b"></script>
 </head>
 <body>
 <div class="app-shell side-collapsed" id="app-shell">
@@ -81,11 +81,11 @@
           <div class="dialog-bubble">ヒープから借りる関数 malloc を、実際のコードで使おう。使うには <code>#include &lt;stdlib.h&gt;</code> が必要だ。int を3つ分借りるなら、こう書く。</div>
         </div>
       </div>
-      <div class="formula-box">
-        <span class="step"><code>int *p = malloc(sizeof(int) * 3);</code></span>
-        <span class="step">sizeof(int) * 3：借りるバイト数（多くの環境で12）。大きさを数字で決め打ちせず sizeof で書く</span>
-        <span class="step">malloc の答え：借りた場所の先頭の番地（型は void *、つまり「何を指すか決まっていない番地」）。C言語では、そのまま int * の変数に入れてよい</span>
-      </div>
+<div class="formula-box">
+  <span class="step"><code>int *p = malloc(sizeof(int) * 3);</code></span>
+  <span class="step">sizeof(int) * 3：借りるバイト数（多くの環境で12）。大きさを数字で決め打ちせず sizeof で書く</span>
+  <span class="step">malloc の答え：借りた場所の先頭の番地（型は void *、つまり「何を指すか決まっていない番地」）。C言語では、そのまま int * の変数に入れてよい</span>
+</div>
       <div class="dialogue-scene">
         <div class="dialog-row right">
           <div class="dialog-character">
@@ -130,46 +130,46 @@
           <div class="dialog-bubble">大事なところだね。C言語の決まりには、<strong>未定義動作</strong>という言葉がある。「この書き方をしたら何が起きるかを、C言語は一切約束しない」という意味だ。たまたま止まることもあれば、何事もなく動いているように見えることも、まったく別のデータを壊すこともある。NULL の先に書くのは、多くのパソコンでは OS に止められるけれど、それも約束ではないんだ。</div>
         </div>
       </div>
-      <div class="formula-box">
-        <span class="step"><strong>未定義動作</strong>：何が起きるかを C言語が約束しない書き方。止まる・動いて見える・別のものを壊す、のどれも起こりうる</span>
-        <span class="step">例：NULL やでたらめな番地の先を読み書きする／配列の範囲の外を使う／返した場所を使う／同じ場所を2回返す</span>
-      </div>
-      <div class="lab" id="st-s3"></div>
-      <script>
-      Stepper.mount(document.getElementById("st-s3"), {
-        id: "ptr-s3-heap", title: "借りて、確かめて、返す",
-        code: [
-          '#include <stdio.h>',
-          '#include <stdlib.h>',
-          '',
-          'int main(void) {',
-          '    int *p = malloc(sizeof(int) * 3);',
-          '    if (p == NULL) {',
-          '        return 1;',
-          '    }',
-          '    p[0] = 100;',
-          '    p[1] = 200;',
-          '    p[2] = 300;',
-          '    printf("%d\\n", p[1]);',
-          '    free(p);',
-          '    p = NULL;',
-          '    return 0;',
-          '}'
-        ],
-        frames: ["main"],
-        steps: [
-          { line: 5, apply: function (m) { M.heap(m, "h", "malloc(int×3)", 12, { fields: [{ key: "0", name: "p[0]", value: "?" }, { key: "1", name: "p[1]", value: "?" }, { key: "2", name: "p[2]", value: "?" }] }); M.svar(m, "main", "p", "p", "int *", null, "h"); }, note: "ヒープに12バイトを借り、その先頭の番地が p に入った。借りた直後の中身は決まっていない（?）。" },
-          { line: 6, apply: M.nop, note: "失敗していないか確かめる。今回は借りられたので、if の中は飛ばす。失敗していたら、使う前にここで終わる。" },
-          { line: 9, apply: function (m) { M.field(m, "h", "0", { value: 100 }); }, note: "<code>p[0] = 100;</code> ― p[0] は *(p + 0)。ヒープの1つ目の int に書く。" },
-          { line: 10, apply: function (m) { M.field(m, "h", "1", { value: 200 }); }, note: "<code>p[1] = 200;</code>" },
-          { line: 11, apply: function (m) { M.field(m, "h", "2", { value: 300 }); }, note: "<code>p[2] = 300;</code>" },
-          { line: 12, apply: M.nop, note: "表示は <b>200</b>。" },
-          { line: 13, apply: function (m) { M.free(m, "h"); }, note: "<code>free(p);</code> ― 借りた場所を返した。でも <b>p の中身（番地）はそのまま</b>。p はもう使ってはいけない場所を指している（宙ぶらりんのポインタ）。矢印が赤い点線になった。" },
-          { line: 14, apply: function (m) { M.set(m, "main", "p", { pointsTo: "NULL" }); }, note: "<code>p = NULL;</code> ― p をどこも指さない状態にした。うっかり p を使っても、返した場所を黙って書き換えることはなくなる。" },
-          { line: 16, apply: function (m) { M.pop(m, "main"); }, note: "main が終わった。ヒープの12バイトはすでに返してあるので、取り残しは無い。" }
-        ]
-      });
-      </script>
+<div class="formula-box">
+  <span class="step"><strong>未定義動作</strong>：何が起きるかを C言語が約束しない書き方。止まる・動いて見える・別のものを壊す、のどれも起こりうる</span>
+  <span class="step">例：NULL やでたらめな番地の先を読み書きする／配列の範囲の外を使う／返した場所を使う／同じ場所を2回返す</span>
+</div>
+<div class="lab" id="st-s3"></div>
+<script>
+Stepper.mount(document.getElementById("st-s3"), {
+  id: "ptr-s3-heap", title: "借りて、確かめて、返す",
+  code: [
+    '#include <stdio.h>',
+    '#include <stdlib.h>',
+    '',
+    'int main(void) {',
+    '    int *p = malloc(sizeof(int) * 3);',
+    '    if (p == NULL) {',
+    '        return 1;',
+    '    }',
+    '    p[0] = 100;',
+    '    p[1] = 200;',
+    '    p[2] = 300;',
+    '    printf("%d\\n", p[1]);',
+    '    free(p);',
+    '    p = NULL;',
+    '    return 0;',
+    '}'
+  ],
+  frames: ["main"],
+  steps: [
+    { line: 5, apply: function (m) { M.heap(m, "h", "malloc(int×3)", 12, { fields: [{ key: "0", name: "p[0]", value: "?" }, { key: "1", name: "p[1]", value: "?" }, { key: "2", name: "p[2]", value: "?" }] }); M.svar(m, "main", "p", "p", "int *", null, "h"); }, note: "ヒープに12バイトを借り、その先頭の番地が p に入った。借りた直後の中身は決まっていない（?）。" },
+    { line: 6, apply: M.nop, note: "失敗していないか確かめる。今回は借りられたので、if の中は飛ばす。失敗していたら、使う前にここで終わる。" },
+    { line: 9, apply: function (m) { M.field(m, "h", "0", { value: 100 }); }, note: "<code>p[0] = 100;</code> ― p[0] は *(p + 0)。ヒープの1つ目の int に書く。" },
+    { line: 10, apply: function (m) { M.field(m, "h", "1", { value: 200 }); }, note: "<code>p[1] = 200;</code>" },
+    { line: 11, apply: function (m) { M.field(m, "h", "2", { value: 300 }); }, note: "<code>p[2] = 300;</code>" },
+    { line: 12, apply: M.nop, note: "表示は <b>200</b>。" },
+    { line: 13, apply: function (m) { M.free(m, "h"); }, note: "<code>free(p);</code> ― 借りた場所を返した。でも <b>p の中身（番地）はそのまま</b>。p はもう使ってはいけない場所を指している（宙ぶらりんのポインタ）。矢印が赤い点線になった。" },
+    { line: 14, apply: function (m) { M.set(m, "main", "p", { pointsTo: "NULL" }); }, note: "<code>p = NULL;</code> ― p をどこも指さない状態にした。うっかり p を使っても、返した場所を黙って書き換えることはなくなる。" },
+    { line: 16, apply: function (m) { M.pop(m, "main"); }, note: "main が終わった。ヒープの12バイトはすでに返してあるので、取り残しは無い。" }
+  ]
+});
+</script>
       <div class="dialogue-scene">
         <div class="dialog-row right">
           <div class="dialog-character">
@@ -200,12 +200,12 @@
           <div class="dialog-bubble">返した場所は、次の malloc で別の用途に貸し出されるかもしれない。そこを p で書き換えたら、別のデータを壊す。これも未定義動作だ。しかも、すぐには何も起きないことが多いので、見つけにくい。</div>
         </div>
       </div>
-      <div class="formula-box">
-        <span class="step">① 借りる：<code>p = malloc(sizeof(型) * 個数);</code></span>
-        <span class="step">② 確かめる：<code>if (p == NULL) { 失敗したときの処理 }</code></span>
-        <span class="step">③ 使い終わったら返す：<code>free(p);</code>（1回だけ。NULL を free するのは何もしないので安全）</span>
-        <span class="step">④ 返したら：<code>p = NULL;</code></span>
-      </div>
+<div class="formula-box">
+  <span class="step">① 借りる：<code>p = malloc(sizeof(型) * 個数);</code></span>
+  <span class="step">② 確かめる：<code>if (p == NULL) { 失敗したときの処理 }</code></span>
+  <span class="step">③ 使い終わったら返す：<code>free(p);</code>（1回だけ。NULL を free するのは何もしないので安全）</span>
+  <span class="step">④ 返したら：<code>p = NULL;</code></span>
+</div>
 
       <h2 class="quiz-head">確認クイズ</h2>
       <div class="quiz-card" data-quiz>

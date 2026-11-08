@@ -26,11 +26,11 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥋</text></svg>">
-<link rel="stylesheet" href="design-system.css?v=20261108a">
-<link rel="stylesheet" href="stepper.css?v=20261108a">
-<script src="js/stages.js?v=20261108a"></script>
-<script src="js/progress.js?v=20261108a"></script>
-<script src="js/stepper.js?v=20261108a"></script>
+<link rel="stylesheet" href="design-system.css?v=20261108b">
+<link rel="stylesheet" href="stepper.css?v=20261108b">
+<script src="js/stages.js?v=20261108b"></script>
+<script src="js/progress.js?v=20261108b"></script>
+<script src="js/stepper.js?v=20261108b"></script>
 </head>
 <body>
 <div class="app-shell side-collapsed" id="app-shell">
@@ -81,13 +81,13 @@
           <div class="dialog-bubble">この道場で目指すことを先に言っておこう。『<a href="https://informatics.habatakijuku.com/memory-quest/" target="_blank" rel="noopener" style="color:#8a5a2a;text-decoration:underline">メモリのしくみクエスト</a>』で、番地・スタック・ヒープ・ポインタの考え方は見てきたね。ここでは、それを<strong>実際の C言語のコード</strong>で書いて、1行ごとにメモリの中で何が起きているかを正確に追えるようにする。</div>
         </div>
       </div>
-      <div class="formula-box">
-        <span class="step"><strong>この道場で解きたい問題</strong></span>
-        <span class="step">分かっているもの：メモリは番地付きの箱の列。関数の変数はスタック、malloc で借りたものはヒープ。ポインタは番地をしまう変数</span>
-        <span class="step">知りたいもの：C言語の1行1行が、どの箱をどう書き換えるのか。どこで間違えると壊れるのか</span>
-        <span class="step">ゴール（STAGE8）：連結リストから値を1つ消す関数 deleteNode を、自分で完成させる</span>
-        <span class="step">道順：変数と番地（1）→ 配列（2）→ ヒープ（3）→ 構造体（4）→ ポインタのポインタ（5）→ 連結リスト（6）→ よくある間違い（7）→ 総合稽古（8）</span>
-      </div>
+<div class="formula-box">
+  <span class="step"><strong>この道場で解きたい問題</strong></span>
+  <span class="step">分かっているもの：メモリは番地付きの箱の列。関数の変数はスタック、malloc で借りたものはヒープ。ポインタは番地をしまう変数</span>
+  <span class="step">知りたいもの：C言語の1行1行が、どの箱をどう書き換えるのか。どこで間違えると壊れるのか</span>
+  <span class="step">ゴール（STAGE8）：連結リストから値を1つ消す関数 deleteNode を、自分で完成させる</span>
+  <span class="step">道順：変数と番地（1）→ 配列（2）→ ヒープ（3）→ 構造体（4）→ ポインタのポインタ（5）→ 連結リスト（6）→ よくある間違い（7）→ 総合稽古（8）</span>
+</div>
       <div class="dialogue-scene">
         <div class="dialog-row right">
           <div class="dialog-character">
@@ -104,11 +104,11 @@
           <div class="dialog-bubble">いまのパソコンは64ビットの CPU だから、番地は8バイトの数で、ふつう12桁くらいの16進数になる。<code>0x7ffd3a2c0e6c</code> のようにね。スタックはこのような大きな番地のあたりに、ヒープはもっと小さい番地のあたりに置かれることが多い。まずは一番かんたんなプログラムを読もう。</div>
         </div>
       </div>
-      <div class="formula-box">
-        <span class="step"><code>#include &lt;stdio.h&gt;</code>　画面に表示する printf などの道具を使うための宣言（これを書かないと printf は使えない）</span>
-        <span class="step"><code>int main(void) { … }</code>　プログラムが最初に動かす関数</span>
-        <span class="step"><code>printf("%d\n", a);</code>　a を10進数で表示する。%d は「ここに整数を入れて表示」、\n は改行</span>
-      </div>
+<div class="formula-box">
+  <span class="step"><code>#include &lt;stdio.h&gt;</code>　画面に表示する printf などの道具を使うための宣言（これを書かないと printf は使えない）</span>
+  <span class="step"><code>int main(void) { … }</code>　プログラムが最初に動かす関数</span>
+  <span class="step"><code>printf("%d\n", a);</code>　a を10進数で表示する。%d は「ここに整数を入れて表示」、\n は改行</span>
+</div>
       <div class="dialogue-scene">
         <div class="dialog-row right">
           <div class="dialog-character">
@@ -132,35 +132,35 @@
           <div class="dialog-bubble">では、番地を取り出して、ポインタで書き換えるコードを動かそう。番地を表示するときは <code>%p</code> を使い、番地を <code>(void *)</code> という「何を指すか決めていない番地」の形に直して渡すのが決まりだ。</div>
         </div>
       </div>
-      <div class="lab" id="st-s1"></div>
-      <script>
-      Stepper.mount(document.getElementById("st-s1"), {
-        id: "ptr-s1-addr", title: "変数の番地を取り出し、ポインタで書き換える",
-        code: [
-          '#include <stdio.h>',
-          '',
-          'int main(void) {',
-          '    int a = 10;',
-          '    int b = 20;',
-          '    printf("%p\\n", (void *)&a);',
-          '    int *p = &a;',
-          '    *p = 30;',
-          '    printf("%d %d\\n", a, b);',
-          '    return 0;',
-          '}'
-        ],
-        frames: ["main"],
-        steps: [
-          { line: 4, apply: function (m) { M.svar(m, "main", "a", "a", "int", 10); }, note: "変数 <b>a</b> の4バイトがスタックの main の板に取られ、10 が入った。右に表示されているのが a の番地。" },
-          { line: 5, apply: function (m) { M.svar(m, "main", "b", "b", "int", 20); }, note: "続けて <b>b</b> の場所が取られた。a と b のどちらが大きい番地になるか、隣り合うかどうかは、コンパイラが決めることで、C言語の決まりでは決まっていない。" },
-          { line: 6, apply: M.nop, note: "<code>&amp;a</code> は a の番地。<code>%p</code> で表示すると、たとえば <code>0x7ffd3a2c0e6c</code> のような値が出る（実行するたびに変わることもある）。" },
-          { line: 7, apply: function (m) { M.svar(m, "main", "p", "p", "int *", null, "a"); }, note: "<code>int *p = &amp;a;</code> ― int を指すポインタ p を作り、a の番地をしまった。p 自身も8バイトの変数としてスタックに置かれる。矢印は「p が a を指している」ことを表す。" },
-          { line: 8, apply: function (m) { M.set(m, "main", "a", { value: 30 }); }, note: "<code>*p = 30;</code> ― p にしまってある番地の箱、つまり a に 30 を書いた。p そのものの中身（番地）は変わっていない。" },
-          { line: 9, apply: M.nop, note: "表示されるのは <b>30 20</b>。a は p を通して書き換わり、b はそのまま。" },
-          { line: 11, apply: function (m) { M.pop(m, "main"); }, note: "main が終わり、板が丸ごと取り除かれた。a・b・p の場所は自動で片付く（free は要らない）。" }
-        ]
-      });
-      </script>
+<div class="lab" id="st-s1"></div>
+<script>
+Stepper.mount(document.getElementById("st-s1"), {
+  id: "ptr-s1-addr", title: "変数の番地を取り出し、ポインタで書き換える",
+  code: [
+    '#include <stdio.h>',
+    '',
+    'int main(void) {',
+    '    int a = 10;',
+    '    int b = 20;',
+    '    printf("%p\\n", (void *)&a);',
+    '    int *p = &a;',
+    '    *p = 30;',
+    '    printf("%d %d\\n", a, b);',
+    '    return 0;',
+    '}'
+  ],
+  frames: ["main"],
+  steps: [
+    { line: 4, apply: function (m) { M.svar(m, "main", "a", "a", "int", 10); }, note: "変数 <b>a</b> の4バイトがスタックの main の板に取られ、10 が入った。右に表示されているのが a の番地。" },
+    { line: 5, apply: function (m) { M.svar(m, "main", "b", "b", "int", 20); }, note: "続けて <b>b</b> の場所が取られた。a と b のどちらが大きい番地になるか、隣り合うかどうかは、コンパイラが決めることで、C言語の決まりでは決まっていない。" },
+    { line: 6, apply: M.nop, note: "<code>&amp;a</code> は a の番地。<code>%p</code> で表示すると、たとえば <code>0x7ffd3a2c0e6c</code> のような値が出る（実行するたびに変わることもある）。" },
+    { line: 7, apply: function (m) { M.svar(m, "main", "p", "p", "int *", null, "a"); }, note: "<code>int *p = &amp;a;</code> ― int を指すポインタ p を作り、a の番地をしまった。p 自身も8バイトの変数としてスタックに置かれる。矢印は「p が a を指している」ことを表す。" },
+    { line: 8, apply: function (m) { M.set(m, "main", "a", { value: 30 }); }, note: "<code>*p = 30;</code> ― p にしまってある番地の箱、つまり a に 30 を書いた。p そのものの中身（番地）は変わっていない。" },
+    { line: 9, apply: M.nop, note: "表示されるのは <b>30 20</b>。a は p を通して書き換わり、b はそのまま。" },
+    { line: 11, apply: function (m) { M.pop(m, "main"); }, note: "main が終わり、板が丸ごと取り除かれた。a・b・p の場所は自動で片付く（free は要らない）。" }
+  ]
+});
+</script>
       <div class="dialogue-scene">
         <div class="dialog-row right">
           <div class="dialog-character">
@@ -191,11 +191,11 @@
           <div class="dialog-bubble">関数の中で <code>int *p;</code> とだけ書いたポインタには、その場所にたまたま残っていた、でたらめな値が入っている。どこを指しているか分からないポインタを<strong>ワイルドポインタ</strong>（野放しのポインタ）と呼び、その先を読み書きすると何が起きるか分からない。だから、まだ指す先が無いときは <code>NULL</code>（どこも指していないことを表す決まった値）を入れておく。</div>
         </div>
       </div>
-      <div class="formula-box">
-        <span class="step"><code>int *p = &amp;a;</code>　p に a の番地を入れる（p は a を指す）</span>
-        <span class="step"><code>*p</code>　p の指す箱（ここでは a）。読むことも書くこともできる</span>
-        <span class="step"><code>int *q = NULL;</code>　まだどこも指さない。何も入れないまま使うのは危険</span>
-      </div>
+<div class="formula-box">
+  <span class="step"><code>int *p = &amp;a;</code>　p に a の番地を入れる（p は a を指す）</span>
+  <span class="step"><code>*p</code>　p の指す箱（ここでは a）。読むことも書くこともできる</span>
+  <span class="step"><code>int *q = NULL;</code>　まだどこも指さない。何も入れないまま使うのは危険</span>
+</div>
 
       <h2 class="quiz-head">確認クイズ</h2>
       <div class="quiz-card" data-quiz>

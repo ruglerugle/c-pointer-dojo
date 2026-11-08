@@ -26,11 +26,11 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥋</text></svg>">
-<link rel="stylesheet" href="design-system.css?v=20261108a">
-<link rel="stylesheet" href="stepper.css?v=20261108a">
-<script src="js/stages.js?v=20261108a"></script>
-<script src="js/progress.js?v=20261108a"></script>
-<script src="js/stepper.js?v=20261108a"></script>
+<link rel="stylesheet" href="design-system.css?v=20261108b">
+<link rel="stylesheet" href="stepper.css?v=20261108b">
+<script src="js/stages.js?v=20261108b"></script>
+<script src="js/progress.js?v=20261108b"></script>
+<script src="js/stepper.js?v=20261108b"></script>
 </head>
 <body>
 <div class="app-shell side-collapsed" id="app-shell">
@@ -95,14 +95,14 @@
           <div class="dialog-bubble">いいね。まとめるとこうなる。</div>
         </div>
       </div>
-      <div class="formula-box">
-        <span class="step">① 解放後の使用：free した場所を、残っていた番地で読み書きする</span>
-        <span class="step">② 二重解放：同じ場所を2回 free する。ヒープの管理係の名簿が壊れる</span>
-        <span class="step">③ メモリリーク：返さないまま番地を失う</span>
-        <span class="step">④ 範囲外の読み書き（バッファあふれ）：配列の大きさを超えた添え字を使う</span>
-        <span class="step">⑤ 初期化していないポインタ（ワイルドポインタ）：でたらめな番地の先を使う</span>
-        <span class="step">⑥ NULL の確かめ忘れ：malloc の失敗を確かめずに使う</span>
-      </div>
+<div class="formula-box">
+  <span class="step">① 解放後の使用：free した場所を、残っていた番地で読み書きする</span>
+  <span class="step">② 二重解放：同じ場所を2回 free する。ヒープの管理係の名簿が壊れる</span>
+  <span class="step">③ メモリリーク：返さないまま番地を失う</span>
+  <span class="step">④ 範囲外の読み書き（バッファあふれ）：配列の大きさを超えた添え字を使う</span>
+  <span class="step">⑤ 初期化していないポインタ（ワイルドポインタ）：でたらめな番地の先を使う</span>
+  <span class="step">⑥ NULL の確かめ忘れ：malloc の失敗を確かめずに使う</span>
+</div>
       <div class="dialogue-scene">
         <div class="dialog-row">
           <div class="dialog-character">
@@ -112,27 +112,27 @@
           <div class="dialog-bubble">まず、STAGE6 の「全部返す」くり返しを、うっかり順番を逆にしてしまったコードを動かして、①がどう起きるかを見よう。</div>
         </div>
       </div>
-      <div class="lab" id="st-s7"></div>
-      <script>
-      Stepper.mount(document.getElementById("st-s7"), {
-        id: "ptr-s7-uaf", title: "間違ったくり返しで全部返す",
-        code: [
-          'Node *cur = head;',
-          'while (cur != NULL) {',
-          '    free(cur);',
-          '    cur = cur->next;   // ← 返した場所を読んでいる',
-          '}'
-        ],
-        frames: ["main"],
-        steps: [
-          { line: 1, apply: function (m) { M.heap(m, "n1", "Node #1", 16, { fields: [{ key: "v", name: "value", value: 1 }, { key: "n", name: "next", pointsTo: "n2" }] }); M.heap(m, "n2", "Node #2", 16, { fields: [{ key: "v", name: "value", value: 2 }, { key: "n", name: "next", pointsTo: "NULL" }] }); M.svar(m, "main", "cur", "cur", "Node *", null, "n1"); }, note: "1 → 2 とつながったリスト。cur を先頭に置いた。" },
-          { line: 3, apply: function (m) { M.free(m, "n1"); }, note: "1つ目を返した。cur はまだ返した場所を指している。" },
-          { line: 4, apply: function (m) { M.set(m, "main", "cur", { pointsTo: "n2" }); }, note: "<b>返した場所の next を読んでいる（解放後の使用）</b>。たまたま古い値が残っていたので2つ目へ進めたが、これは偶然。返した直後に別の誰かがその場所を借りていたら、でたらめな番地へ進んでしまう。" },
-          { line: 3, apply: function (m) { M.free(m, "n2"); }, note: "2つ目を返した。" },
-          { line: 4, apply: function (m) { M.set(m, "main", "cur", { pointsTo: "NULL" }); }, note: "また返した場所を読んでいる。今回も「たまたま」動いた。テストで動いても、間違いが無いとは言えない。" }
-        ]
-      });
-      </script>
+<div class="lab" id="st-s7"></div>
+<script>
+Stepper.mount(document.getElementById("st-s7"), {
+  id: "ptr-s7-uaf", title: "間違ったくり返しで全部返す",
+  code: [
+    'Node *cur = head;',
+    'while (cur != NULL) {',
+    '    free(cur);',
+    '    cur = cur->next;   // ← 返した場所を読んでいる',
+    '}'
+  ],
+  frames: ["main"],
+  steps: [
+    { line: 1, apply: function (m) { M.heap(m, "n1", "Node #1", 16, { fields: [{ key: "v", name: "value", value: 1 }, { key: "n", name: "next", pointsTo: "n2" }] }); M.heap(m, "n2", "Node #2", 16, { fields: [{ key: "v", name: "value", value: 2 }, { key: "n", name: "next", pointsTo: "NULL" }] }); M.svar(m, "main", "cur", "cur", "Node *", null, "n1"); }, note: "1 → 2 とつながったリスト。cur を先頭に置いた。" },
+    { line: 3, apply: function (m) { M.free(m, "n1"); }, note: "1つ目を返した。cur はまだ返した場所を指している。" },
+    { line: 4, apply: function (m) { M.set(m, "main", "cur", { pointsTo: "n2" }); }, note: "<b>返した場所の next を読んでいる（解放後の使用）</b>。たまたま古い値が残っていたので2つ目へ進めたが、これは偶然。返した直後に別の誰かがその場所を借りていたら、でたらめな番地へ進んでしまう。" },
+    { line: 3, apply: function (m) { M.free(m, "n2"); }, note: "2つ目を返した。" },
+    { line: 4, apply: function (m) { M.set(m, "main", "cur", { pointsTo: "NULL" }); }, note: "また返した場所を読んでいる。今回も「たまたま」動いた。テストで動いても、間違いが無いとは言えない。" }
+  ]
+});
+</script>
       <div class="dialogue-scene">
         <div class="dialog-row right">
           <div class="dialog-character">

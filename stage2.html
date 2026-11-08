@@ -26,11 +26,11 @@
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🥋</text></svg>">
-<link rel="stylesheet" href="design-system.css?v=20261108a">
-<link rel="stylesheet" href="stepper.css?v=20261108a">
-<script src="js/stages.js?v=20261108a"></script>
-<script src="js/progress.js?v=20261108a"></script>
-<script src="js/stepper.js?v=20261108a"></script>
+<link rel="stylesheet" href="design-system.css?v=20261108b">
+<link rel="stylesheet" href="stepper.css?v=20261108b">
+<script src="js/stages.js?v=20261108b"></script>
+<script src="js/progress.js?v=20261108b"></script>
+<script src="js/stepper.js?v=20261108b"></script>
 </head>
 <body>
 <div class="app-shell side-collapsed" id="app-shell">
@@ -109,11 +109,11 @@
           <div class="dialog-bubble">2つある。<code>sizeof arr</code> と書いたときと、<code>&amp;arr</code> と書いたときだ。sizeof arr は配列全体の大きさ（int 4つで16バイト）になる。もし番地に変わってしまっていたら、ポインタの大きさの8になるはずだね。&amp;arr は「配列全体の番地」で、値は arr[0] の番地と同じだけれど、「16バイトのかたまりを指す」という意味になる。</div>
         </div>
       </div>
-      <div class="formula-box">
-        <span class="step"><code>arr</code>（式の中）→ &amp;arr[0]、つまり先頭要素の番地に変わる</span>
-        <span class="step">例外1：<code>sizeof arr</code> は配列全体の大きさ（4×4＝16バイト）</span>
-        <span class="step">例外2：<code>&amp;arr</code> は配列全体を指す番地（値は先頭と同じ、意味が違う）</span>
-      </div>
+<div class="formula-box">
+  <span class="step"><code>arr</code>（式の中）→ &amp;arr[0]、つまり先頭要素の番地に変わる</span>
+  <span class="step">例外1：<code>sizeof arr</code> は配列全体の大きさ（4×4＝16バイト）</span>
+  <span class="step">例外2：<code>&amp;arr</code> は配列全体を指す番地（値は先頭と同じ、意味が違う）</span>
+</div>
       <div class="dialogue-scene">
         <div class="dialog-row">
           <div class="dialog-character">
@@ -123,37 +123,37 @@
           <div class="dialog-bubble">ポインタの足し算は、<strong>指している型1個分</strong>ずつ進むんだったね。int を指す p なら、p + 1 は番地として4バイト先。そして <code>arr[i]</code> という書き方は、C言語の決まりでは <code>*(arr + i)</code> とまったく同じ意味だと定められている。</div>
         </div>
       </div>
-      <div class="lab" id="st-s2"></div>
-      <script>
-      Stepper.mount(document.getElementById("st-s2"), {
-        id: "ptr-s2-arith", title: "配列とポインタ演算",
-        code: [
-          '#include <stdio.h>',
-          '',
-          'int main(void) {',
-          '    int arr[4] = {10, 20, 30, 40};',
-          '    int *p = arr;',
-          '    printf("%d\\n", *p);',
-          '    p = p + 1;',
-          '    printf("%d\\n", *p);',
-          '    printf("%d %d\\n", arr[2], *(arr + 2));',
-          '    printf("%zu %zu\\n", sizeof arr, sizeof p);',
-          '    return 0;',
-          '}'
-        ],
-        frames: ["main"],
-        steps: [
-          { line: 4, apply: function (m) { M.sarray(m, "main", "arr", "arr", "int", [10, 20, 30, 40]); }, note: "arr の4つの int が、番地の連続した場所に並んだ。番地が4ずつ増えていることを確かめよう。" },
-          { line: 5, apply: function (m) { M.svar(m, "main", "p", "p", "int *", null, "arr0"); }, note: "<code>int *p = arr;</code> ― 式の中の arr は先頭要素の番地に変わるので、p は arr[0] を指す。" },
-          { line: 6, apply: M.nop, note: "<code>*p</code> は p の指す箱、arr[0]。表示は <b>10</b>。" },
-          { line: 7, apply: function (m) { M.set(m, "main", "p", { pointsTo: "arr1" }); }, note: "<code>p = p + 1;</code> ― 番地は1ではなく、int 1個分の4だけ進む。p は arr[1] を指すようになった。" },
-          { line: 8, apply: M.nop, note: "表示は <b>20</b>。" },
-          { line: 9, apply: M.nop, note: "arr[2] と *(arr + 2) は同じ意味なので、表示は <b>30 30</b>。" },
-          { line: 10, apply: M.nop, note: "sizeof arr は配列全体で <b>16</b>、sizeof p はポインタの大きさで <b>8</b>。%zu は sizeof の結果（size_t 型）を表示する書き方。" },
-          { line: 12, apply: function (m) { M.pop(m, "main"); }, note: "main が終わり、配列もポインタも板ごと片付いた。" }
-        ]
-      });
-      </script>
+<div class="lab" id="st-s2"></div>
+<script>
+Stepper.mount(document.getElementById("st-s2"), {
+  id: "ptr-s2-arith", title: "配列とポインタ演算",
+  code: [
+    '#include <stdio.h>',
+    '',
+    'int main(void) {',
+    '    int arr[4] = {10, 20, 30, 40};',
+    '    int *p = arr;',
+    '    printf("%d\\n", *p);',
+    '    p = p + 1;',
+    '    printf("%d\\n", *p);',
+    '    printf("%d %d\\n", arr[2], *(arr + 2));',
+    '    printf("%zu %zu\\n", sizeof arr, sizeof p);',
+    '    return 0;',
+    '}'
+  ],
+  frames: ["main"],
+  steps: [
+    { line: 4, apply: function (m) { M.sarray(m, "main", "arr", "arr", "int", [10, 20, 30, 40]); }, note: "arr の4つの int が、番地の連続した場所に並んだ。番地が4ずつ増えていることを確かめよう。" },
+    { line: 5, apply: function (m) { M.svar(m, "main", "p", "p", "int *", null, "arr0"); }, note: "<code>int *p = arr;</code> ― 式の中の arr は先頭要素の番地に変わるので、p は arr[0] を指す。" },
+    { line: 6, apply: M.nop, note: "<code>*p</code> は p の指す箱、arr[0]。表示は <b>10</b>。" },
+    { line: 7, apply: function (m) { M.set(m, "main", "p", { pointsTo: "arr1" }); }, note: "<code>p = p + 1;</code> ― 番地は1ではなく、int 1個分の4だけ進む。p は arr[1] を指すようになった。" },
+    { line: 8, apply: M.nop, note: "表示は <b>20</b>。" },
+    { line: 9, apply: M.nop, note: "arr[2] と *(arr + 2) は同じ意味なので、表示は <b>30 30</b>。" },
+    { line: 10, apply: M.nop, note: "sizeof arr は配列全体で <b>16</b>、sizeof p はポインタの大きさで <b>8</b>。%zu は sizeof の結果（size_t 型）を表示する書き方。" },
+    { line: 12, apply: function (m) { M.pop(m, "main"); }, note: "main が終わり、配列もポインタも板ごと片付いた。" }
+  ]
+});
+</script>
       <div class="dialogue-scene">
         <div class="dialog-row right">
           <div class="dialog-character">
